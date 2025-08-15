@@ -8,35 +8,50 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Pastel Pinterest-style color palette */
+    --background: 332 100% 98%;
+    --foreground: 340 15% 25%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 340 15% 25%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 340 15% 25%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 340 82% 52%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 154 44% 85%;
+    --secondary-foreground: 340 15% 25%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 332 100% 96%;
+    --muted-foreground: 340 15% 55%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 267 57% 78%;
+    --accent-foreground: 340 15% 25%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 332 100% 93%;
+    --input: 332 100% 93%;
+    --ring: 340 82% 52%;
 
-    --radius: 0.5rem;
+    /* Pastel gradient backgrounds */
+    --gradient-pastel: linear-gradient(135deg, hsl(332 100% 98%) 0%, hsl(154 44% 95%) 50%, hsl(267 57% 95%) 100%);
+    --gradient-card-pink: linear-gradient(135deg, hsl(340 82% 96%) 0%, hsl(340 82% 98%) 100%);
+    --gradient-card-mint: linear-gradient(135deg, hsl(154 44% 93%) 0%, hsl(154 44% 96%) 100%);
+    --gradient-card-lavender: linear-gradient(135deg, hsl(267 57% 93%) 0%, hsl(267 57% 96%) 100%);
+
+    /* Soft shadows */
+    --shadow-soft: 0 4px 20px -2px hsl(340 82% 52% / 0.1);
+    --shadow-card: 0 8px 30px -4px hsl(340 82% 52% / 0.15);
+    --shadow-hover: 0 12px 40px -6px hsl(340 82% 52% / 0.2);
+
+    /* Animation timing */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    --radius: 1.5rem;
 
     --sidebar-background: 0 0% 98%;
 
