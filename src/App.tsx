@@ -7,6 +7,13 @@ import Index from "./pages/Index";
 import StaffRegister from "./pages/StaffRegister";
 import StudentRegister from "./pages/StudentRegister";
 import AdminLogin from "./pages/AdminLogin";
+import StaffDashboard from "./pages/StaffDashboard";
+import StaffSubjects from "./pages/staff/StaffSubjects";
+import StaffStudents from "./pages/staff/StaffStudents";
+import StaffAssignments from "./pages/staff/StaffAssignments";
+import StaffGradebook from "./pages/staff/StaffGradebook";
+import StaffSchedule from "./pages/staff/StaffSchedule";
+import StaffResources from "./pages/staff/StaffResources";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +29,13 @@ const App = () => (
           <Route path="/staff-register" element={<StaffRegister />} />
           <Route path="/student-register" element={<StudentRegister />} />
           <Route path="/admin-login" element={<AdminLogin />} />
+          <Route path="/staff/dashboard" element={<StaffDashboard />} />
+          <Route path="/staff/subjects" element={<StaffSubjects />} />
+          <Route path="/staff/students" element={<StaffStudents />} />
+          <Route path="/staff/assignments" element={<StaffAssignments />} />
+          <Route path="/staff/gradebook" element={<StaffGradebook />} />
+          <Route path="/staff/schedule" element={<StaffSchedule />} />
+          <Route path="/staff/resources" element={<StaffResources />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
