@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
-import { BookOpen, Users, ClipboardList, BarChart3, Calendar, FolderOpen, LogOut } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { BookOpen, Users, ClipboardList, BarChart3, Calendar, FolderOpen, LogOut, Upload } from "lucide-react";
 
 const dashboardCards = [
   {
@@ -8,42 +10,54 @@ const dashboardCards = [
     icon: BookOpen,
     href: "/staff/subjects",
     gradient: "bg-gradient-card-pink",
-    description: "Manage your assigned subjects"
+    description: "5 Active Courses",
+    action: "View All",
+    stats: "Computer Science, Mathematics, Physics..."
   },
   {
     title: "Students",
     icon: Users,
     href: "/staff/students", 
     gradient: "bg-gradient-card-mint",
-    description: "View student profiles & attendance"
+    description: "142 Students",
+    action: "Manage Students",
+    stats: "Active across all courses"
   },
   {
     title: "Assignments",
     icon: ClipboardList,
     href: "/staff/assignments",
     gradient: "bg-gradient-card-lavender", 
-    description: "Create and manage assignments"
+    description: "8 Pending Reviews",
+    action: "View / Create",
+    stats: "3 new submissions today"
   },
   {
     title: "Gradebook",
     icon: BarChart3,
     href: "/staff/gradebook",
     gradient: "bg-gradient-card-pink",
-    description: "View marks and performance"
+    description: "Average: 85.2%",
+    action: "Open Gradebook",
+    stats: "Performance trending up"
   },
   {
     title: "Schedule",
     icon: Calendar,
     href: "/staff/schedule",
     gradient: "bg-gradient-card-mint",
-    description: "Manage your timetable"
+    description: "4 Classes Today",
+    action: "View Timetable",
+    stats: "Next: Advanced Physics at 2:00 PM"
   },
   {
     title: "Resources",
-    icon: FolderOpen,
+    icon: Upload,
     href: "/staff/resources",
     gradient: "bg-gradient-card-lavender",
-    description: "Upload and organize materials"
+    description: "24 Files Uploaded",
+    action: "Open Resources",
+    stats: "Quick upload available"
   }
 ];
 
@@ -72,7 +86,32 @@ const StaffDashboard = () => {
       </nav>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-12">
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        {/* Profile Section */}
+        <div className="mb-12">
+          <Card className="bg-gradient-card-lavender rounded-3xl border-0 shadow-elegant max-w-2xl mx-auto">
+            <CardContent className="p-8">
+              <div className="flex flex-col md:flex-row items-center gap-6">
+                <Avatar className="w-24 h-24 ring-4 ring-white/50 shadow-soft">
+                  <AvatarImage src="/src/assets/staff-card-image.jpg" alt="Staff Profile" />
+                  <AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold">
+                    DR
+                  </AvatarFallback>
+                </Avatar>
+                <div className="text-center md:text-left space-y-2">
+                  <h2 className="text-3xl font-bold text-foreground">Dr. Rachel Martinez</h2>
+                  <p className="text-lg text-primary font-semibold">Associate Professor</p>
+                  <p className="text-muted-foreground">Department of Computer Science</p>
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    <span className="bg-white/30 text-foreground px-3 py-1 rounded-full text-sm">PhD Computer Science</span>
+                    <span className="bg-white/30 text-foreground px-3 py-1 rounded-full text-sm">5 Years Experience</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Dashboard Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {dashboardCards.map((card) => {
@@ -88,21 +127,35 @@ const StaffDashboard = () => {
                   hover:scale-105 hover:shadow-hover group-hover:border-primary/20
                   ${card.gradient}
                 `}>
-                  <CardContent className="p-8 text-center space-y-4">
+                  <CardContent className="p-6 space-y-4">
                     {/* Icon */}
-                    <div className="w-16 h-16 mx-auto bg-card/30 rounded-2xl flex items-center justify-center shadow-soft">
-                      <IconComponent className="w-8 h-8 text-primary" />
+                    <div className="w-12 h-12 bg-card/30 rounded-xl flex items-center justify-center shadow-soft">
+                      <IconComponent className="w-6 h-6 text-primary" />
                     </div>
                     
                     {/* Title */}
-                    <h3 className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors duration-300">
+                    <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors duration-300">
                       {card.title}
                     </h3>
                     
-                    {/* Description */}
-                    <p className="text-sm text-muted-foreground">
-                      {card.description}
-                    </p>
+                    {/* Stats/Description */}
+                    <div className="space-y-2">
+                      <p className="text-lg font-bold text-foreground">
+                        {card.description}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {card.stats}
+                      </p>
+                    </div>
+
+                    {/* Action Button */}
+                    <Button 
+                      size="sm" 
+                      variant="secondary"
+                      className="w-full bg-white/50 hover:bg-white/70 text-foreground border-0 shadow-sm"
+                    >
+                      {card.action}
+                    </Button>
                   </CardContent>
                 </Card>
               </Link>
@@ -110,6 +163,15 @@ const StaffDashboard = () => {
           })}
         </div>
       </main>
+
+      {/* Footer */}
+      <footer className="bg-card/40 backdrop-blur-sm border-t border-border/20 py-6">
+        <div className="max-w-7xl mx-auto px-6">
+          <p className="text-center text-muted-foreground text-sm">
+            © 2025 Staff Dashboard
+          </p>
+        </div>
+      </footer>
     </div>
   );
 };
