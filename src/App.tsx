@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import StaffRegister from "./pages/StaffRegister";
 import StudentRegister from "./pages/StudentRegister";
+import StaffLogin from "./pages/StaffLogin";
+import StudentLogin from "./pages/StudentLogin";
 import AdminLogin from "./pages/AdminLogin";
 import StaffDashboard from "./pages/StaffDashboard";
 import StaffSubjects from "./pages/staff/StaffSubjects";
@@ -28,6 +30,8 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/staff-register" element={<StaffRegister />} />
           <Route path="/student-register" element={<StudentRegister />} />
+          <Route path="/staff-login" element={<StaffLogin />} />
+          <Route path="/student-login" element={<StudentLogin />} />
           <Route path="/admin-login" element={<AdminLogin />} />
           <Route path="/staff/dashboard" element={<StaffDashboard />} />
           <Route path="/staff/subjects" element={<StaffSubjects />} />
