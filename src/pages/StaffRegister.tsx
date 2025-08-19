@@ -1,25 +1,20 @@
-import { Link } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-interface StaffFormData {
-  fullName: string;
-  staffId: string;
-  department: string;
-  email: string;
-  phone: string;
-  password: string;
-  confirmPassword: string;
-}
 
 const StaffRegister = () => {
-  const { register, handleSubmit, formState: { errors } } = useForm<StaffFormData>();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const navigate = useNavigate();
 
-  const onSubmit = (data: StaffFormData) => {
-    console.log("Staff registration data:", data);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Navigate directly to staff dashboard
+    navigate("/staff/dashboard");
   };
 
   return (
@@ -32,59 +27,21 @@ const StaffRegister = () => {
         
         {/* Registration Card */}
         <div className="bg-card rounded-2xl shadow-card p-8 border border-border/20">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* Full Name */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Name */}
             <div className="space-y-2">
-              <Label htmlFor="fullName" className="text-sm font-medium text-foreground">
+              <Label htmlFor="name" className="text-sm font-medium text-foreground">
                 Full Name
               </Label>
               <Input
-                id="fullName"
+                id="name"
                 type="text"
                 placeholder="Enter your full name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 className="rounded-xl border-border/30 focus:border-primary/50 focus:ring-primary/30"
-                {...register("fullName", { required: "Full name is required" })}
+                required
               />
-              {errors.fullName && (
-                <p className="text-sm text-destructive">{errors.fullName.message}</p>
-              )}
-            </div>
-
-            {/* Staff ID */}
-            <div className="space-y-2">
-              <Label htmlFor="staffId" className="text-sm font-medium text-foreground">
-                Staff ID
-              </Label>
-              <Input
-                id="staffId"
-                type="text"
-                placeholder="Enter your staff ID"
-                className="rounded-xl border-border/30 focus:border-primary/50 focus:ring-primary/30"
-                {...register("staffId", { required: "Staff ID is required" })}
-              />
-              {errors.staffId && (
-                <p className="text-sm text-destructive">{errors.staffId.message}</p>
-              )}
-            </div>
-
-            {/* Department */}
-            <div className="space-y-2">
-              <Label htmlFor="department" className="text-sm font-medium text-foreground">
-                Department
-              </Label>
-              <Select>
-                <SelectTrigger className="rounded-xl border-border/30 focus:border-primary/50 focus:ring-primary/30">
-                  <SelectValue placeholder="Select your department" />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl border-border/30">
-                  <SelectItem value="computer-science">Computer Science</SelectItem>
-                  <SelectItem value="mathematics">Mathematics</SelectItem>
-                  <SelectItem value="physics">Physics</SelectItem>
-                  <SelectItem value="chemistry">Chemistry</SelectItem>
-                  <SelectItem value="biology">Biology</SelectItem>
-                  <SelectItem value="others">Others</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
 
             {/* Email */}
@@ -96,35 +53,11 @@ const StaffRegister = () => {
                 id="email"
                 type="email"
                 placeholder="Enter your email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="rounded-xl border-border/30 focus:border-primary/50 focus:ring-primary/30"
-                {...register("email", { 
-                  required: "Email is required",
-                  pattern: {
-                    value: /^\S+@\S+$/i,
-                    message: "Invalid email address"
-                  }
-                })}
+                required
               />
-              {errors.email && (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
-              )}
-            </div>
-
-            {/* Phone Number */}
-            <div className="space-y-2">
-              <Label htmlFor="phone" className="text-sm font-medium text-foreground">
-                Phone Number
-              </Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="Enter your phone number"
-                className="rounded-xl border-border/30 focus:border-primary/50 focus:ring-primary/30"
-                {...register("phone", { required: "Phone number is required" })}
-              />
-              {errors.phone && (
-                <p className="text-sm text-destructive">{errors.phone.message}</p>
-              )}
             </div>
 
             {/* Password */}
@@ -136,18 +69,11 @@ const StaffRegister = () => {
                 id="password"
                 type="password"
                 placeholder="Create a password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="rounded-xl border-border/30 focus:border-primary/50 focus:ring-primary/30"
-                {...register("password", { 
-                  required: "Password is required",
-                  minLength: {
-                    value: 6,
-                    message: "Password must be at least 6 characters"
-                  }
-                })}
+                required
               />
-              {errors.password && (
-                <p className="text-sm text-destructive">{errors.password.message}</p>
-              )}
             </div>
 
             {/* Confirm Password */}
@@ -159,18 +85,17 @@ const StaffRegister = () => {
                 id="confirmPassword"
                 type="password"
                 placeholder="Confirm your password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 className="rounded-xl border-border/30 focus:border-primary/50 focus:ring-primary/30"
-                {...register("confirmPassword", { required: "Please confirm your password" })}
+                required
               />
-              {errors.confirmPassword && (
-                <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
-              )}
             </div>
 
             {/* Register Button */}
             <Button
               type="submit"
-              className="w-full rounded-xl bg-gradient-card-pink text-white font-medium py-3 hover:scale-105 transition-all duration-300 shadow-soft"
+              className="w-full bg-gradient-primary hover:opacity-90 text-primary-foreground font-medium py-3 rounded-lg transition-all duration-300 hover:scale-[1.02] shadow-button"
             >
               Register
             </Button>
@@ -182,7 +107,7 @@ const StaffRegister = () => {
               Already have an account?{" "}
               <Link
                 to="/staff-login"
-                className="text-primary hover:text-primary/80 transition-colors duration-300 underline"
+                className="text-primary hover:text-primary/80 transition-colors duration-300 underline-offset-4 hover:underline"
               >
                 Login here
               </Link>
