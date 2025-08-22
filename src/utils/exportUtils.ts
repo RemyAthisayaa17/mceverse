@@ -1,0 +1,181 @@
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+
+interface GradeData {
+  student_name: string;
+  subject_name: string;
+  subject_code: string;
+  assignment_name: string;
+  grade: number;
+  date: string;
+}
+
+interface ClassStats {
+  totalStudents: number;
+  averageGrade: number;
+  highestGrade: number;
+  lowestGrade: number;
+  passRate: number;
+  subjectStats: {
+    name: string;
+    code: string;
+    averageGrade: number;
+    studentCount: number;
+    passRate: number;
+  }[];
+}
+
+export const exportGradeSheet = (grades: GradeData[], format: 'excel' | 'csv' = 'excel') => {
+  if (grades.length === 0) {
+    alert('No grade data to export');
+    return;
+  }
+
+  // Prepare data for export
+  const exportData = grades.map(grade => ({
+    'Student Name': grade.student_name,
+    'Subject': grade.subject_name,
+    'Subject Code': grade.subject_code,
+    'Assignment': grade.assignment_name,
+    'Grade (%)': grade.grade,
+    'Date': new Date(grade.date).toLocaleDateString()
+  }));
+
+  // Create workbook
+  const ws = XLSX.utils.json_to_sheet(exportData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Grades');
+
+  // Set column widths
+  const colWidths = [
+    { wch: 20 }, // Student Name
+    { wch: 25 }, // Subject
+    { wch: 12 }, // Subject Code
+    { wch: 20 }, // Assignment
+    { wch: 10 }, // Grade
+    { wch: 12 }  // Date
+  ];
+  ws['!cols'] = colWidths;
+
+  // Generate filename with timestamp
+  const timestamp = new Date().toISOString().split('T')[0];
+  const filename = `grade-sheet-${timestamp}`;
+
+  // Export based on format
+  if (format === 'excel') {
+    XLSX.writeFile(wb, `${filename}.xlsx`);
+  } else {
+    XLSX.writeFile(wb, `${filename}.csv`);
+  }
+};
+
+export const exportClassReport = (stats: ClassStats) => {
+  const doc = new jsPDF();
+  
+  // Set up pastel colors
+  const pastelPink = [250, 228, 237];
+  const pastelMint = [233, 250, 243];
+  const pastelLavender = [243, 238, 251];
+  const darkText = [87, 63, 87];
+  
+  // Header with pastel gradient effect
+  doc.setFillColor(pastelLavender[0], pastelLavender[1], pastelLavender[2]);
+  doc.rect(0, 0, 210, 40, 'F');
+  
+  doc.setTextColor(darkText[0], darkText[1], darkText[2]);
+  doc.setFontSize(24);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Class Performance Report', 20, 25);
+  
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Generated on ${new Date().toLocaleDateString()}`, 20, 35);
+
+  let yPosition = 60;
+
+  // Overall Statistics Section
+  doc.setFillColor(pastelPink[0], pastelPink[1], pastelPink[2]);
+  doc.rect(20, yPosition - 5, 170, 8, 'F');
+  
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Overall Statistics', 25, yPosition);
+  yPosition += 20;
+
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'normal');
+  
+  const overallStats = [
+    `Total Students: ${stats.totalStudents}`,
+    `Class Average: ${stats.averageGrade.toFixed(1)}%`,
+    `Highest Grade: ${stats.highestGrade}%`,
+    `Lowest Grade: ${stats.lowestGrade}%`,
+    `Pass Rate: ${stats.passRate.toFixed(1)}%`
+  ];
+
+  overallStats.forEach(stat => {
+    doc.text(stat, 25, yPosition);
+    yPosition += 8;
+  });
+
+  yPosition += 10;
+
+  // Subject Performance Section
+  doc.setFillColor(pastelMint[0], pastelMint[1], pastelMint[2]);
+  doc.rect(20, yPosition - 5, 170, 8, 'F');
+  
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Subject Performance', 25, yPosition);
+  yPosition += 15;
+
+  // Table headers
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Subject', 25, yPosition);
+  doc.text('Code', 70, yPosition);
+  doc.text('Students', 100, yPosition);
+  doc.text('Average', 130, yPosition);
+  doc.text('Pass Rate', 160, yPosition);
+  yPosition += 8;
+
+  // Draw line under headers
+  doc.setDrawColor(darkText[0], darkText[1], darkText[2]);
+  doc.line(25, yPosition - 2, 185, yPosition - 2);
+  yPosition += 5;
+
+  // Subject data
+  doc.setFont('helvetica', 'normal');
+  stats.subjectStats.forEach((subject, index) => {
+    // Alternate row colors
+    if (index % 2 === 0) {
+      doc.setFillColor(250, 250, 250);
+      doc.rect(20, yPosition - 5, 170, 8, 'F');
+    }
+    
+    doc.text(subject.name.substring(0, 18), 25, yPosition);
+    doc.text(subject.code, 70, yPosition);
+    doc.text(subject.studentCount.toString(), 100, yPosition);
+    doc.text(`${subject.averageGrade.toFixed(1)}%`, 130, yPosition);
+    doc.text(`${subject.passRate.toFixed(1)}%`, 160, yPosition);
+    yPosition += 8;
+    
+    // Check if we need a new page
+    if (yPosition > 270) {
+      doc.addPage();
+      yPosition = 20;
+    }
+  });
+
+  // Footer
+  doc.setFillColor(pastelLavender[0], pastelLavender[1], pastelLavender[2]);
+  doc.rect(0, 280, 210, 17, 'F');
+  
+  doc.setFontSize(8);
+  doc.setTextColor(100, 100, 100);
+  doc.text('Generated by Staff Dashboard - Confidential Document', 20, 290);
+
+  // Save the PDF
+  const timestamp = new Date().toISOString().split('T')[0];
+  doc.save(`class-report-${timestamp}.pdf`);
+};
