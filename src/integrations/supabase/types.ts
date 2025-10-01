@@ -14,7 +14,224 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      attendance: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          status: string
+          student_id: string
+          subject_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          status: string
+          student_id: string
+          subject_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          status?: string
+          student_id?: string
+          subject_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      grades: {
+        Row: {
+          assignment_name: string | null
+          created_at: string
+          grade: number
+          graded_by: string | null
+          id: string
+          student_id: string
+          subject_id: string
+          updated_at: string
+        }
+        Insert: {
+          assignment_name?: string | null
+          created_at?: string
+          grade: number
+          graded_by?: string | null
+          id?: string
+          student_id: string
+          subject_id: string
+          updated_at?: string
+        }
+        Update: {
+          assignment_name?: string | null
+          created_at?: string
+          grade?: number
+          graded_by?: string | null
+          id?: string
+          student_id?: string
+          subject_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grades_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grades_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resources: {
+        Row: {
+          created_at: string
+          description: string | null
+          file_type: string
+          file_url: string
+          id: string
+          subject_id: string
+          title: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          file_type: string
+          file_url: string
+          id?: string
+          subject_id: string
+          title: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          file_type?: string
+          file_url?: string
+          id?: string
+          subject_id?: string
+          title?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resources_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_profiles: {
+        Row: {
+          academic_year: string
+          created_at: string
+          department: string
+          email: string
+          full_name: string
+          id: string
+          phone_number: string | null
+          register_number: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          academic_year: string
+          created_at?: string
+          department: string
+          email: string
+          full_name: string
+          id?: string
+          phone_number?: string | null
+          register_number: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          academic_year?: string
+          created_at?: string
+          department?: string
+          email?: string
+          full_name?: string
+          id?: string
+          phone_number?: string | null
+          register_number?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      students: {
+        Row: {
+          class: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          student_id: string
+        }
+        Insert: {
+          class?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          student_id: string
+        }
+        Update: {
+          class?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          student_id?: string
+        }
+        Relationships: []
+      }
+      subjects: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
