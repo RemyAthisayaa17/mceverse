@@ -51,7 +51,7 @@ const StaffLogin = () => {
                 placeholder="Enter your email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg border-input bg-background/50 focus:border-primary focus:ring-primary/20"
+                className="w-full rounded-xl border-border/30 bg-background/60 focus-visible:ring-2 focus-visible:ring-primary/30"
                 required
               />
             </div>
@@ -68,7 +68,7 @@ const StaffLogin = () => {
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-lg border-input bg-background/50 focus:border-primary focus:ring-primary/20 pr-10"
+                  className="w-full rounded-xl border-border/30 bg-background/60 focus-visible:ring-2 focus-visible:ring-primary/30 pr-10"
                   required
                 />
                 <button
@@ -88,7 +88,7 @@ const StaffLogin = () => {
             {/* Login Button */}
             <Button
               type="submit"
-              className="w-full bg-gradient-primary hover:opacity-90 text-primary-foreground font-medium py-3 rounded-lg transition-all duration-300 hover:scale-[1.02] shadow-button"
+              className="w-full rounded-xl bg-gradient-card-lavender text-primary-foreground font-medium py-3 shadow-button transition-all duration-300 hover:shadow-hover active:scale-95 focus-visible:ring-2 focus-visible:ring-primary/30"
             >
               Login
             </Button>

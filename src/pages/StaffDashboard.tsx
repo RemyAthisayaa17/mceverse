@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Users, ClipboardList, BarChart3, Calendar, FolderOpen, LogOut, Upload } from "lucide-react";
+import { EditProfileModal } from "@/components/gradebook/EditProfileModal";
 
 const dashboardCards = [
   {
@@ -62,6 +64,13 @@ const dashboardCards = [
 ];
 
 const StaffDashboard = () => {
+  const [profile, setProfile] = useState({
+    name: "Dr. Rachel Martinez",
+    email: "rachel.martinez@school.edu",
+    role: "Associate Professor",
+    phone: "",
+  });
+  const [editOpen, setEditOpen] = useState(false);
   return (
     <div className="min-h-screen bg-gradient-pastel">
       {/* Top Navigation */}
@@ -98,11 +107,23 @@ const StaffDashboard = () => {
                     DR
                   </AvatarFallback>
                 </Avatar>
-                <div className="text-center md:text-left space-y-2">
-                  <h2 className="text-3xl font-bold text-foreground">Dr. Rachel Martinez</h2>
-                  <p className="text-lg text-primary font-semibold">Associate Professor</p>
-                  <p className="text-muted-foreground">Department of Computer Science</p>
-                  <div className="flex flex-wrap gap-2 mt-3">
+                <div className="text-center md:text-left space-y-2 w-full">
+                  <div className="flex items-center justify-center md:justify-between gap-3">
+                    <div>
+                      <h2 className="text-3xl font-bold text-foreground">{profile.name}</h2>
+                      <p className="text-lg text-primary font-semibold">{profile.role}</p>
+                      <p className="text-muted-foreground">{profile.email || "Department of Computer Science"}</p>
+                    </div>
+                    <Button
+                      variant="secondary"
+                      onClick={() => setEditOpen(true)}
+                      className="rounded-xl bg-white/60 hover:bg-white/80 active:scale-95 focus-visible:ring-2 focus-visible:ring-primary/30 text-foreground border-0"
+                      aria-label="Edit profile"
+                    >
+                      Edit
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-3 justify-center md:justify-start">
                     <span className="bg-white/30 text-foreground px-3 py-1 rounded-full text-sm">PhD Computer Science</span>
                     <span className="bg-white/30 text-foreground px-3 py-1 rounded-full text-sm">5 Years Experience</span>
                   </div>
@@ -163,6 +184,13 @@ const StaffDashboard = () => {
           })}
         </div>
       </main>
+
+      <EditProfileModal
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        currentProfile={profile}
+        onProfileUpdated={setProfile}
+      />
 
       {/* Footer */}
       <footer className="bg-card/40 backdrop-blur-sm border-t border-border/20 py-6">

@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, TrendingUp, Users, Award, BookOpen } from "lucide-react";
 
+const sb = supabase as any;
+
 interface ClassStats {
   totalStudents: number;
   averageGrade: number;
@@ -42,7 +44,7 @@ export const ClassReportModal = ({ open, onOpenChange }: ClassReportModalProps) 
     setLoading(true);
     try {
       // Fetch grades with student and subject info
-      const { data: grades, error } = await supabase
+      const { data: grades, error } = await sb
         .from('grades')
         .select(`
           grade,

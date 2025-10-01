@@ -17,6 +17,7 @@ import StaffGradebook from "./pages/staff/StaffGradebook";
 import StaffSchedule from "./pages/staff/StaffSchedule";
 import StaffResources from "./pages/staff/StaffResources";
 import NotFound from "./pages/NotFound";
+import ForgotPassword from "./pages/ForgotPassword";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/staff-login" element={<StaffLogin />} />
           <Route path="/student-login" element={<StudentLogin />} />
           <Route path="/admin-login" element={<AdminLogin />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/staff/dashboard" element={<StaffDashboard />} />
           <Route path="/staff/subjects" element={<StaffSubjects />} />
           <Route path="/staff/students" element={<StaffStudents />} />

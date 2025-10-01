@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
+const sb = supabase as any;
+
 interface Student {
   id: string;
   name: string;
@@ -46,7 +48,7 @@ export const EnterGradeModal = ({ open, onOpenChange, onGradeAdded }: EnterGrade
 
   const fetchStudents = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await sb
         .from('students')
         .select('id, name, student_id')
         .order('name');
@@ -64,7 +66,7 @@ export const EnterGradeModal = ({ open, onOpenChange, onGradeAdded }: EnterGrade
 
   const fetchSubjects = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await sb
         .from('subjects')
         .select('id, name, code')
         .order('name');
@@ -104,7 +106,7 @@ export const EnterGradeModal = ({ open, onOpenChange, onGradeAdded }: EnterGrade
 
     setLoading(true);
     try {
-      const { error } = await supabase
+      const { error } = await sb
         .from('grades')
         .insert([
           {
