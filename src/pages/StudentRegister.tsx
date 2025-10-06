@@ -1,9 +1,12 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface StudentFormData {
   fullName: string;
@@ -17,10 +20,86 @@ interface StudentFormData {
 }
 
 const StudentRegister = () => {
-  const { register, handleSubmit, formState: { errors } } = useForm<StudentFormData>();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [department, setDepartment] = useState("");
+  const [yearOfStudy, setYearOfStudy] = useState("");
+  const { register, handleSubmit, formState: { errors }, watch } = useForm<StudentFormData>();
 
-  const onSubmit = (data: StudentFormData) => {
-    console.log("Student registration data:", data);
+  const onSubmit = async (data: StudentFormData) => {
+    if (data.password !== data.confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!department || !yearOfStudy) {
+      toast({
+        title: "Error",
+        description: "Please select department and year of study",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    // Sign up the user
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: data.email,
+      password: data.password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/student/dashboard`,
+      },
+    });
+
+    if (authError) {
+      toast({
+        title: "Registration Failed",
+        description: authError.message,
+        variant: "destructive",
+      });
+      setLoading(false);
+      return;
+    }
+
+    // Create student profile
+    if (authData.user) {
+      const { error: profileError } = await supabase
+        .from("student_profiles")
+        .insert({
+          user_id: authData.user.id,
+          full_name: data.fullName,
+          register_number: data.studentId,
+          academic_year: yearOfStudy,
+          department: department,
+          phone_number: data.phone,
+          email: data.email,
+        });
+
+      if (profileError) {
+        toast({
+          title: "Profile Creation Failed",
+          description: profileError.message,
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      toast({
+        title: "Registration Successful",
+        description: "Please check your email to verify your account.",
+      });
+      
+      navigate("/student-login");
+    }
+
+    setLoading(false);
   };
 
   return (
@@ -73,17 +152,17 @@ const StudentRegister = () => {
               <Label htmlFor="department" className="text-sm font-medium text-foreground">
                 Department
               </Label>
-              <Select>
+              <Select value={department} onValueChange={setDepartment}>
                 <SelectTrigger className="rounded-xl border-border/30 focus:border-primary/50 focus:ring-primary/30">
                   <SelectValue placeholder="Select your department" />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border-border/30">
-                  <SelectItem value="computer-science">Computer Science</SelectItem>
-                  <SelectItem value="mathematics">Mathematics</SelectItem>
-                  <SelectItem value="physics">Physics</SelectItem>
-                  <SelectItem value="chemistry">Chemistry</SelectItem>
-                  <SelectItem value="biology">Biology</SelectItem>
-                  <SelectItem value="others">Others</SelectItem>
+                  <SelectItem value="Computer Science">Computer Science</SelectItem>
+                  <SelectItem value="Mathematics">Mathematics</SelectItem>
+                  <SelectItem value="Physics">Physics</SelectItem>
+                  <SelectItem value="Chemistry">Chemistry</SelectItem>
+                  <SelectItem value="Biology">Biology</SelectItem>
+                  <SelectItem value="Others">Others</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -93,15 +172,15 @@ const StudentRegister = () => {
               <Label htmlFor="yearOfStudy" className="text-sm font-medium text-foreground">
                 Year of Study
               </Label>
-              <Select>
+              <Select value={yearOfStudy} onValueChange={setYearOfStudy}>
                 <SelectTrigger className="rounded-xl border-border/30 focus:border-primary/50 focus:ring-primary/30">
                   <SelectValue placeholder="Select your year of study" />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border-border/30">
-                  <SelectItem value="1st-year">1st Year</SelectItem>
-                  <SelectItem value="2nd-year">2nd Year</SelectItem>
-                  <SelectItem value="3rd-year">3rd Year</SelectItem>
-                  <SelectItem value="4th-year">4th Year</SelectItem>
+                  <SelectItem value="1st Year">1st Year</SelectItem>
+                  <SelectItem value="2nd Year">2nd Year</SelectItem>
+                  <SelectItem value="3rd Year">3rd Year</SelectItem>
+                  <SelectItem value="4th Year">4th Year</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -189,9 +268,10 @@ const StudentRegister = () => {
             {/* Register Button */}
             <Button
               type="submit"
-              className="w-full rounded-xl bg-gradient-card-lavender text-white font-medium py-3 hover:scale-105 transition-all duration-300 shadow-soft"
+              disabled={loading}
+              className="w-full rounded-xl bg-gradient-card-lavender text-white font-medium py-3 hover:scale-105 transition-all duration-300 shadow-soft disabled:opacity-50"
             >
-              Register
+              {loading ? "Registering..." : "Register"}
             </Button>
           </form>
 

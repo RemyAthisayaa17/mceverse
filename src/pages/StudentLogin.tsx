@@ -1,24 +1,55 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GraduationCap, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const StudentLogin = () => {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      navigate("/student/dashboard");
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement login logic
-    toast({
-      title: "Login Attempted",
-      description: "Student login functionality to be implemented.",
+    setLoading(true);
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
     });
+
+    if (error) {
+      toast({
+        title: "Login Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Login Successful",
+        description: "Welcome back!",
+      });
+      navigate("/student/dashboard");
+    }
+
+    setLoading(false);
   };
 
   return (
@@ -92,9 +123,10 @@ const StudentLogin = () => {
             {/* Login Button */}
             <Button
               type="submit"
-              className="w-full bg-gradient-secondary hover:opacity-90 text-secondary-foreground font-medium py-3 rounded-lg transition-all duration-300 hover:scale-[1.02] shadow-button"
+              disabled={loading}
+              className="w-full bg-gradient-secondary hover:opacity-90 text-secondary-foreground font-medium py-3 rounded-lg transition-all duration-300 hover:scale-[1.02] shadow-button disabled:opacity-50"
             >
-              Login
+              {loading ? "Logging in..." : "Login"}
             </Button>
 
             {/* Links */}
