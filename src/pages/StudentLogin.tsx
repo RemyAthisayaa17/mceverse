@@ -28,28 +28,82 @@ const StudentLogin = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
+    
+    // Validate fields
+    if (!email || !password) {
       toast({
-        title: "Login Failed",
-        description: error.message,
+        title: "Validation Error",
+        description: "Please enter both email and password",
         variant: "destructive",
       });
-    } else {
-      toast({
-        title: "Login Successful",
-        description: "Welcome back!",
-      });
-      navigate("/student/dashboard");
+      return;
     }
 
-    setLoading(false);
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: password,
+      });
+
+      if (error) {
+        // Handle specific error cases
+        if (error.message.includes("Invalid login credentials")) {
+          toast({
+            title: "Login Failed",
+            description: "Invalid email or password. If you haven't registered yet, please sign up first.",
+            variant: "destructive",
+          });
+        } else if (error.message.includes("Email not confirmed")) {
+          toast({
+            title: "Email Not Verified",
+            description: "Please check your email and verify your account before logging in.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Login Failed",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
+      } else if (data?.user) {
+        // Check if student profile exists
+        const { data: profile, error: profileError } = await supabase
+          .from("student_profiles")
+          .select("*")
+          .eq("user_id", data.user.id)
+          .maybeSingle();
+
+        if (profileError) {
+          console.error("Profile check error:", profileError);
+        }
+
+        if (!profile) {
+          toast({
+            title: "Profile Not Found",
+            description: "Student profile not found. Please contact support or register again.",
+            variant: "destructive",
+          });
+          await supabase.auth.signOut();
+        } else {
+          toast({
+            title: "Login Successful",
+            description: `Welcome back, ${profile.full_name}!`,
+          });
+          navigate("/student/dashboard");
+        }
+      }
+    } catch (err: any) {
+      toast({
+        title: "Network Error",
+        description: "Unable to connect to the server. Please check your internet connection.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

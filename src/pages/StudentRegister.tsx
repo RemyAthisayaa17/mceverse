@@ -28,6 +28,7 @@ const StudentRegister = () => {
   const { register, handleSubmit, formState: { errors }, watch } = useForm<StudentFormData>();
 
   const onSubmit = async (data: StudentFormData) => {
+    // Validate password match
     if (data.password !== data.confirmPassword) {
       toast({
         title: "Error",
@@ -37,6 +38,17 @@ const StudentRegister = () => {
       return;
     }
 
+    // Validate password strength
+    if (data.password.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate selections
     if (!department || !yearOfStudy) {
       toast({
         title: "Error",
@@ -48,58 +60,90 @@ const StudentRegister = () => {
 
     setLoading(true);
 
-    // Sign up the user
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: data.email,
-      password: data.password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/student/dashboard`,
-      },
-    });
-
-    if (authError) {
-      toast({
-        title: "Registration Failed",
-        description: authError.message,
-        variant: "destructive",
-      });
-      setLoading(false);
-      return;
-    }
-
-    // Create student profile
-    if (authData.user) {
-      const { error: profileError } = await supabase
+    try {
+      // Check if user already exists
+      const { data: existingUser } = await supabase
         .from("student_profiles")
-        .insert({
-          user_id: authData.user.id,
-          full_name: data.fullName,
-          register_number: data.studentId,
-          academic_year: yearOfStudy,
-          department: department,
-          phone_number: data.phone,
-          email: data.email,
-        });
+        .select("email")
+        .eq("email", data.email.trim())
+        .maybeSingle();
 
-      if (profileError) {
+      if (existingUser) {
         toast({
-          title: "Profile Creation Failed",
-          description: profileError.message,
+          title: "Registration Failed",
+          description: "An account with this email already exists. Please login instead.",
           variant: "destructive",
         });
         setLoading(false);
         return;
       }
 
-      toast({
-        title: "Registration Successful",
-        description: "Please check your email to verify your account.",
+      // Sign up the user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email.trim(),
+        password: data.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/student/dashboard`,
+          data: {
+            full_name: data.fullName,
+            register_number: data.studentId,
+          }
+        },
       });
-      
-      navigate("/student-login");
-    }
 
-    setLoading(false);
+      if (authError) {
+        toast({
+          title: "Registration Failed",
+          description: authError.message,
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Create student profile
+      if (authData.user) {
+        const { error: profileError } = await supabase
+          .from("student_profiles")
+          .insert({
+            user_id: authData.user.id,
+            full_name: data.fullName.trim(),
+            register_number: data.studentId.trim(),
+            academic_year: yearOfStudy,
+            department: department,
+            phone_number: data.phone.trim(),
+            email: data.email.trim(),
+          });
+
+        if (profileError) {
+          console.error("Profile creation error:", profileError);
+          toast({
+            title: "Profile Creation Failed",
+            description: "Account created but profile setup failed. Please contact support.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
+        toast({
+          title: "Registration Successful! 🎉",
+          description: "You can now login with your credentials. Check your email for verification if required.",
+        });
+        
+        setTimeout(() => {
+          navigate("/student-login");
+        }, 1500);
+      }
+    } catch (err: any) {
+      toast({
+        title: "Network Error",
+        description: "Unable to complete registration. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
