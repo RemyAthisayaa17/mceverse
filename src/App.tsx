@@ -10,6 +10,7 @@ import StaffLogin from "./pages/StaffLogin";
 import StudentLogin from "./pages/StudentLogin";
 import AdminLogin from "./pages/AdminLogin";
 import StaffDashboard from "./pages/StaffDashboard";
+import StudentDashboard from "./pages/StudentDashboard";
 import StaffSubjects from "./pages/staff/StaffSubjects";
 import StaffStudents from "./pages/staff/StaffStudents";
 import StaffAssignments from "./pages/staff/StaffAssignments";
@@ -36,6 +37,7 @@ const App = () => (
           <Route path="/admin-login" element={<AdminLogin />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/staff/dashboard" element={<StaffDashboard />} />
+          <Route path="/student/dashboard" element={<StudentDashboard />} />
           <Route path="/staff/subjects" element={<StaffSubjects />} />
           <Route path="/staff/students" element={<StaffStudents />} />
           <Route path="/staff/assignments" element={<StaffAssignments />} />
