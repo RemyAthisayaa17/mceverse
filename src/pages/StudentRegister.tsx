@@ -59,16 +59,17 @@ const StudentRegister = () => {
     }
 
     setLoading(true);
+    console.log('[signup] signupStart');
 
     try {
-      // Check if user already exists
-      const { data: existingUser } = await supabase
+      // Check if user already exists in student_profiles
+      const { data: existingStudent } = await supabase
         .from("student_profiles")
         .select("email")
         .eq("email", data.email.trim())
         .maybeSingle();
 
-      if (existingUser) {
+      if (existingStudent) {
         toast({
           title: "Registration Failed",
           description: "An account with this email already exists. Please login instead.",
@@ -95,6 +96,7 @@ const StudentRegister = () => {
       });
 
       if (authError) {
+        console.error('[signup] signupFailed:', authError);
         toast({
           title: "Registration Failed",
           description: authError.message,
@@ -104,47 +106,137 @@ const StudentRegister = () => {
         return;
       }
 
-      // If email confirmation is disabled, session will be created automatically
-      // Create student profile with the authenticated session
-      if (authData.user) {
-        // Wait a moment for session to be established
-        await new Promise(resolve => setTimeout(resolve, 500));
+      console.log('[signup] signupSuccess, user:', authData.user?.id);
 
-        const { error: profileError } = await supabase
-          .from("student_profiles")
-          .insert({
-            user_id: authData.user.id,
-            full_name: data.fullName.trim(),
-            register_number: data.studentId.trim(),
-            academic_year: yearOfStudy,
-            department: department,
-            phone_number: data.phone.trim(),
-            email: data.email.trim(),
-          });
+      if (!authData.user) {
+        toast({
+          title: "Registration Failed",
+          description: "Unable to create account. Please try again.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
 
-        if (profileError) {
-          console.error("Profile creation error:", profileError);
-          toast({
-            title: "Profile Creation Failed",
-            description: "Account created but profile setup failed. Please contact support.",
-            variant: "destructive",
-          });
-          setLoading(false);
-          return;
+      // Wait a moment for session to be established
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Attempt 1: Try to create both profiles tables
+      console.log('[signup] profileInsertStart');
+      
+      let studentProfileError = null;
+      let profilesError = null;
+
+      // Insert into student_profiles
+      const { error: spError } = await supabase
+        .from("student_profiles")
+        .insert({
+          user_id: authData.user.id,
+          full_name: data.fullName.trim(),
+          register_number: data.studentId.trim(),
+          academic_year: yearOfStudy,
+          department: department,
+          phone_number: data.phone.trim(),
+          email: data.email.trim(),
+        });
+
+      studentProfileError = spError;
+
+      // Insert into profiles
+      const { error: pError } = await supabase
+        .from("profiles")
+        .insert({
+          id: authData.user.id,
+          email: data.email.trim(),
+          full_name: data.fullName.trim(),
+          phone_number: data.phone.trim(),
+        });
+
+      profilesError = pError;
+
+      // If both failed, retry once after 300ms
+      if (studentProfileError || profilesError) {
+        console.log('[signup] profileInsertRetry after 300ms');
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        if (studentProfileError) {
+          const { error: spRetryError } = await supabase
+            .from("student_profiles")
+            .insert({
+              user_id: authData.user.id,
+              full_name: data.fullName.trim(),
+              register_number: data.studentId.trim(),
+              academic_year: yearOfStudy,
+              department: department,
+              phone_number: data.phone.trim(),
+              email: data.email.trim(),
+            });
+          studentProfileError = spRetryError;
         }
 
-        toast({
-          title: "Registration Successful! 🎉",
-          description: authData.session 
-            ? "You can now login with your credentials."
-            : "Check your email to verify your account before logging in.",
-        });
-        
-        setTimeout(() => {
-          navigate("/student-login");
-        }, 1500);
+        if (profilesError) {
+          const { error: pRetryError } = await supabase
+            .from("profiles")
+            .insert({
+              id: authData.user.id,
+              email: data.email.trim(),
+              full_name: data.fullName.trim(),
+              phone_number: data.phone.trim(),
+            });
+          profilesError = pRetryError;
+        }
       }
+
+      // If profiles still failed, fallback to edge function (service role)
+      if (profilesError) {
+        console.log('[signup] profileInsertFailed, calling safe-signup edge function');
+        const { error: edgeFnError } = await supabase.functions.invoke('safe-signup', {
+          body: {
+            userId: authData.user.id,
+            email: data.email.trim(),
+            fullName: data.fullName.trim(),
+            phoneNumber: data.phone.trim(),
+          }
+        });
+
+        if (edgeFnError) {
+          console.error('[signup] safe-signup edge function error:', edgeFnError);
+        } else {
+          console.log('[signup] profileInsertSuccess via edge function');
+          profilesError = null; // Mark as resolved
+        }
+      } else {
+        console.log('[signup] profileInsertSuccess');
+      }
+
+      // Report status
+      if (studentProfileError) {
+        console.error('[signup] student_profiles insert failed:', studentProfileError.message, studentProfileError.details);
+      }
+      if (profilesError) {
+        console.error('[signup] profiles insert failed (even after edge function):', profilesError);
+        toast({
+          title: "Profile Setup Incomplete",
+          description: "Your account was created, but profile setup failed. Please contact support or try logging in after resetting your password.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      toast({
+        title: "Registration Successful! 🎉",
+        description: authData.session 
+          ? "You can now login with your credentials."
+          : "Check your email to verify your account before logging in.",
+      });
+      
+      setTimeout(() => {
+        navigate("/student-login");
+      }, 1500);
+
     } catch (err: any) {
+      console.error('[signup] networkError:', err);
       toast({
         title: "Network Error",
         description: "Unable to complete registration. Please try again.",
