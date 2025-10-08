@@ -87,6 +87,9 @@ const StudentRegister = () => {
           data: {
             full_name: data.fullName,
             register_number: data.studentId,
+            academic_year: yearOfStudy,
+            department: department,
+            phone_number: data.phone,
           }
         },
       });
@@ -101,8 +104,12 @@ const StudentRegister = () => {
         return;
       }
 
-      // Create student profile
+      // If email confirmation is disabled, session will be created automatically
+      // Create student profile with the authenticated session
       if (authData.user) {
+        // Wait a moment for session to be established
+        await new Promise(resolve => setTimeout(resolve, 500));
+
         const { error: profileError } = await supabase
           .from("student_profiles")
           .insert({
@@ -128,7 +135,9 @@ const StudentRegister = () => {
 
         toast({
           title: "Registration Successful! 🎉",
-          description: "You can now login with your credentials. Check your email for verification if required.",
+          description: authData.session 
+            ? "You can now login with your credentials."
+            : "Check your email to verify your account before logging in.",
         });
         
         setTimeout(() => {
