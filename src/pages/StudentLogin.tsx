@@ -80,20 +80,48 @@ const StudentLogin = () => {
           console.error("Profile check error:", profileError);
         }
 
-        if (!profile) {
+      if (!profile) {
+        // Auto-create student profile if missing
+        console.log('[StudentLogin] Profile not found, attempting auto-creation for user:', data.user.id);
+        
+        const { data: newProfile, error: createError } = await supabase
+          .from("student_profiles")
+          .insert({
+            user_id: data.user.id,
+            email: data.user.email || email,
+            full_name: data.user.user_metadata?.full_name || "Student",
+            register_number: data.user.user_metadata?.register_number || "PENDING",
+            academic_year: data.user.user_metadata?.academic_year || "Not Set",
+            department: data.user.user_metadata?.department || "Not Set",
+            phone_number: data.user.user_metadata?.phone_number || null,
+          })
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('[StudentLogin] Auto-create profile failed:', createError);
           toast({
-            title: "Profile Not Found",
-            description: "Student profile not found. Please contact support or register again.",
+            title: "Profile Setup Required",
+            description: "Please complete your registration or contact support.",
             variant: "destructive",
           });
           await supabase.auth.signOut();
         } else {
+          console.log('[StudentLogin] Profile auto-created successfully:', newProfile);
           toast({
-            title: "Login Successful",
-            description: `Welcome back, ${profile.full_name}!`,
+            title: "Welcome!",
+            description: "Please complete your profile information in the dashboard.",
           });
           navigate("/student/dashboard");
         }
+      } else {
+        console.log('[StudentLogin] Profile found, login successful:', profile);
+        toast({
+          title: "Login Successful",
+          description: `Welcome back, ${profile.full_name}!`,
+        });
+        navigate("/student/dashboard");
+      }
       }
     } catch (err: any) {
       toast({
