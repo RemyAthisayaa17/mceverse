@@ -14,6 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      assignments: {
+        Row: {
+          academic_year: string
+          created_at: string
+          department: string
+          description: string | null
+          due_date: string | null
+          file_type: string | null
+          file_url: string | null
+          id: string
+          posted_by: string
+          subject_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          academic_year: string
+          created_at?: string
+          department: string
+          description?: string | null
+          due_date?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          posted_by: string
+          subject_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          academic_year?: string
+          created_at?: string
+          department?: string
+          description?: string | null
+          due_date?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          posted_by?: string
+          subject_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assignments_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       attendance: {
         Row: {
           created_at: string
@@ -171,6 +224,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      student_notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          related_id: string | null
+          student_id: string
+          title: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          related_id?: string | null
+          student_id: string
+          title: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          related_id?: string | null
+          student_id?: string
+          title?: string
+          type?: string
+        }
+        Relationships: []
       }
       student_profiles: {
         Row: {

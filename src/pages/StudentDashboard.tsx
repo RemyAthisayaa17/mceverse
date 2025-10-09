@@ -11,22 +11,42 @@ import {
   BookOpen, 
   FileText, 
   LogOut,
-  Bell
+  Bell,
+  ClipboardList
 } from "lucide-react";
 import StudentProfile from "@/components/student/StudentProfile";
 import StudentAttendance from "@/components/student/StudentAttendance";
 import StudentGrades from "@/components/student/StudentGrades";
 import StudentResources from "@/components/student/StudentResources";
+import StudentAssignments from "@/components/student/StudentAssignments";
+import StudentNotifications from "@/components/student/StudentNotifications";
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [studentProfile, setStudentProfile] = useState<any>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     checkAuth();
   }, []);
+
+  useEffect(() => {
+    if (studentProfile?.id) {
+      fetchUnreadCount();
+    }
+  }, [studentProfile]);
+
+  const fetchUnreadCount = async () => {
+    const { count } = await supabase
+      .from("student_notifications")
+      .select("*", { count: "exact", head: true })
+      .eq("student_id", studentProfile.id)
+      .eq("is_read", false);
+    
+    setUnreadCount(count || 0);
+  };
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -96,9 +116,19 @@ const StudentDashboard = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                className="rounded-full hover:bg-secondary/20"
+                className="rounded-full hover:bg-secondary/20 relative"
+                onClick={() => {
+                  const tabs = document.querySelector('[role="tablist"]');
+                  const notifTab = tabs?.querySelector('[value="notifications"]') as HTMLElement;
+                  notifTab?.click();
+                }}
               >
                 <Bell className="w-5 h-5 text-muted-foreground" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-semibold">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
               </Button>
               <Button
                 onClick={handleLogout}
@@ -139,11 +169,30 @@ const StudentDashboard = () => {
               Gradebook
             </TabsTrigger>
             <TabsTrigger 
+              value="assignments"
+              className="rounded-xl data-[state=active]:bg-gradient-card-mint data-[state=active]:text-foreground"
+            >
+              <ClipboardList className="w-4 h-4 mr-2" />
+              Assignments
+            </TabsTrigger>
+            <TabsTrigger 
               value="resources"
               className="rounded-xl data-[state=active]:bg-secondary data-[state=active]:text-foreground"
             >
               <FileText className="w-4 h-4 mr-2" />
               Resources
+            </TabsTrigger>
+            <TabsTrigger 
+              value="notifications"
+              className="rounded-xl data-[state=active]:bg-gradient-card-pink data-[state=active]:text-foreground relative"
+            >
+              <Bell className="w-4 h-4 mr-2" />
+              Notifications
+              {unreadCount > 0 && (
+                <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-primary text-primary-foreground">
+                  {unreadCount}
+                </span>
+              )}
             </TabsTrigger>
           </TabsList>
 
@@ -159,8 +208,16 @@ const StudentDashboard = () => {
             <StudentGrades studentId={studentProfile?.id} />
           </TabsContent>
 
+          <TabsContent value="assignments" className="space-y-6">
+            <StudentAssignments studentId={studentProfile?.id} />
+          </TabsContent>
+
           <TabsContent value="resources" className="space-y-6">
             <StudentResources />
+          </TabsContent>
+
+          <TabsContent value="notifications" className="space-y-6">
+            <StudentNotifications studentId={studentProfile?.id} />
           </TabsContent>
         </Tabs>
       </main>
