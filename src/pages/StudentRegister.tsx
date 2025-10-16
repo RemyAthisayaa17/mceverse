@@ -410,11 +410,11 @@ const StudentRegister = () => {
               )}
             </div>
 
-            {/* Register Button */}
+            {/* Register Button - Dark and Prominent */}
             <Button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl bg-gradient-card-lavender text-white font-medium py-3 hover:scale-105 transition-all duration-300 shadow-soft disabled:opacity-50"
+              className="w-full rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3 hover:scale-105 transition-all duration-300 shadow-button disabled:opacity-50"
             >
               {loading ? "Registering..." : "Register"}
             </Button>

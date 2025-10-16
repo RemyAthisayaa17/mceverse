@@ -1,20 +1,134 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+
+interface StaffFormData {
+  fullName: string;
+  email: string;
+  phone: string;
+  department: string;
+  yearOfStudy: string;
+  password: string;
+  confirmPassword: string;
+}
 
 const StaffRegister = () => {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [department, setDepartment] = useState("");
+  const [yearOfStudy, setYearOfStudy] = useState("");
+  const { register, handleSubmit, formState: { errors } } = useForm<StaffFormData>();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Navigate directly to staff dashboard
-    navigate("/staff/dashboard");
+  const onSubmit = async (data: StaffFormData) => {
+    if (data.password !== data.confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (data.password.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!department || !yearOfStudy) {
+      toast({
+        title: "Error",
+        description: "Please select department and year of study",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Sign up the user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email.trim(),
+        password: data.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/staff/dashboard`,
+          data: {
+            full_name: data.fullName,
+            department: department,
+            academic_year: yearOfStudy,
+            phone_number: data.phone,
+          }
+        },
+      });
+
+      if (authError) {
+        toast({
+          title: "Registration Failed",
+          description: authError.message,
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      if (!authData.user) {
+        toast({
+          title: "Registration Failed",
+          description: "Unable to create account. Please try again.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Insert into staff_profiles
+      const { error: profileError } = await supabase
+        .from("staff_profiles")
+        .insert({
+          user_id: authData.user.id,
+          full_name: data.fullName.trim(),
+          email: data.email.trim(),
+          phone_number: data.phone.trim(),
+          department: department,
+          academic_year: yearOfStudy,
+        });
+
+      if (profileError) {
+        console.error('Profile creation error:', profileError);
+      }
+
+      toast({
+        title: "Registration Successful! 🎉",
+        description: "You can now login with your credentials.",
+      });
+      
+      setTimeout(() => {
+        navigate("/staff-login");
+      }, 1500);
+
+    } catch (err: any) {
+      console.error('Registration error:', err);
+      toast({
+        title: "Network Error",
+        description: "Unable to complete registration. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -27,21 +141,22 @@ const StaffRegister = () => {
         
         {/* Registration Card */}
         <div className="bg-card rounded-2xl shadow-card p-8 border border-border/20">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Name */}
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Full Name */}
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-sm font-medium text-foreground">
+              <Label htmlFor="fullName" className="text-sm font-medium text-foreground">
                 Full Name
               </Label>
               <Input
-                id="name"
+                id="fullName"
                 type="text"
                 placeholder="Enter your full name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
                 className="rounded-xl border-border/30 focus:border-primary/50 focus:ring-primary/30"
-                required
+                {...register("fullName", { required: "Full name is required" })}
               />
+              {errors.fullName && (
+                <p className="text-sm text-destructive">{errors.fullName.message}</p>
+              )}
             </div>
 
             {/* Email */}
@@ -53,11 +168,74 @@ const StaffRegister = () => {
                 id="email"
                 type="email"
                 placeholder="Enter your email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 className="rounded-xl border-border/30 focus:border-primary/50 focus:ring-primary/30"
-                required
+                {...register("email", { 
+                  required: "Email is required",
+                  pattern: {
+                    value: /^\S+@\S+$/i,
+                    message: "Invalid email address"
+                  }
+                })}
               />
+              {errors.email && (
+                <p className="text-sm text-destructive">{errors.email.message}</p>
+              )}
+            </div>
+
+            {/* Phone Number */}
+            <div className="space-y-2">
+              <Label htmlFor="phone" className="text-sm font-medium text-foreground">
+                Phone Number
+              </Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="Enter your phone number"
+                className="rounded-xl border-border/30 focus:border-primary/50 focus:ring-primary/30"
+                {...register("phone", { required: "Phone number is required" })}
+              />
+              {errors.phone && (
+                <p className="text-sm text-destructive">{errors.phone.message}</p>
+              )}
+            </div>
+
+            {/* Department */}
+            <div className="space-y-2">
+              <Label htmlFor="department" className="text-sm font-medium text-foreground">
+                Department
+              </Label>
+              <Select value={department} onValueChange={setDepartment}>
+                <SelectTrigger className="rounded-xl border-border/30 focus:border-primary/50 focus:ring-primary/30">
+                  <SelectValue placeholder="Select your department" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-border/30">
+                  <SelectItem value="Computer Science">Computer Science</SelectItem>
+                  <SelectItem value="Mathematics">Mathematics</SelectItem>
+                  <SelectItem value="Physics">Physics</SelectItem>
+                  <SelectItem value="Chemistry">Chemistry</SelectItem>
+                  <SelectItem value="Biology">Biology</SelectItem>
+                  <SelectItem value="Others">Others</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Year of Study */}
+            <div className="space-y-2">
+              <Label htmlFor="yearOfStudy" className="text-sm font-medium text-foreground">
+                Teaching Year
+              </Label>
+              <Select value={yearOfStudy} onValueChange={setYearOfStudy}>
+                <SelectTrigger className="rounded-xl border-border/30 focus:border-primary/50 focus:ring-primary/30">
+                  <SelectValue placeholder="Select teaching year" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-border/30">
+                  <SelectItem value="1st Year">1st Year</SelectItem>
+                  <SelectItem value="2nd Year">2nd Year</SelectItem>
+                  <SelectItem value="3rd Year">3rd Year</SelectItem>
+                  <SelectItem value="4th Year">4th Year</SelectItem>
+                  <SelectItem value="All Years">All Years</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Password */}
@@ -69,11 +247,18 @@ const StaffRegister = () => {
                 id="password"
                 type="password"
                 placeholder="Create a password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
                 className="rounded-xl border-border/30 focus:border-primary/50 focus:ring-primary/30"
-                required
+                {...register("password", { 
+                  required: "Password is required",
+                  minLength: {
+                    value: 6,
+                    message: "Password must be at least 6 characters"
+                  }
+                })}
               />
+              {errors.password && (
+                <p className="text-sm text-destructive">{errors.password.message}</p>
+              )}
             </div>
 
             {/* Confirm Password */}
@@ -85,19 +270,21 @@ const StaffRegister = () => {
                 id="confirmPassword"
                 type="password"
                 placeholder="Confirm your password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
                 className="rounded-xl border-border/30 focus:border-primary/50 focus:ring-primary/30"
-                required
+                {...register("confirmPassword", { required: "Please confirm your password" })}
               />
+              {errors.confirmPassword && (
+                <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
+              )}
             </div>
 
-            {/* Register Button */}
+            {/* Register Button - Dark and Prominent */}
             <Button
               type="submit"
-              className="w-full bg-gradient-primary hover:opacity-90 text-primary-foreground font-medium py-3 rounded-lg transition-all duration-300 hover:scale-[1.02] shadow-button"
+              disabled={loading}
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3 rounded-xl transition-all duration-300 hover:scale-[1.02] shadow-button"
             >
-              Register
+              {loading ? "Registering..." : "Register"}
             </Button>
           </form>
 

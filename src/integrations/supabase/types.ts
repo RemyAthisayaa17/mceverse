@@ -225,6 +225,81 @@ export type Database = {
           },
         ]
       }
+      schedules: {
+        Row: {
+          created_at: string
+          day_of_week: string
+          end_time: string
+          id: string
+          room: string
+          staff_id: string | null
+          start_time: string
+          students_count: number
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: string
+          end_time: string
+          id?: string
+          room: string
+          staff_id?: string | null
+          start_time: string
+          students_count?: number
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: string
+          end_time?: string
+          id?: string
+          room?: string
+          staff_id?: string | null
+          start_time?: string
+          students_count?: number
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      staff_profiles: {
+        Row: {
+          academic_year: string | null
+          created_at: string
+          department: string
+          email: string
+          full_name: string
+          id: string
+          phone_number: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          academic_year?: string | null
+          created_at?: string
+          department: string
+          email: string
+          full_name: string
+          id?: string
+          phone_number?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          academic_year?: string | null
+          created_at?: string
+          department?: string
+          email?: string
+          full_name?: string
+          id?: string
+          phone_number?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       student_notifications: {
         Row: {
           created_at: string

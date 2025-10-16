@@ -3,18 +3,72 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { Users, Eye, EyeOff } from "lucide-react";
 
 const StaffLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Navigate directly to staff dashboard
-    navigate("/staff/dashboard");
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: password,
+      });
+
+      if (error) {
+        toast({
+          title: "Login Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      if (data.user) {
+        // Check if staff profile exists
+        const { data: profile } = await supabase
+          .from("staff_profiles")
+          .select("*")
+          .eq("user_id", data.user.id)
+          .maybeSingle();
+
+        if (!profile) {
+          toast({
+            title: "Access Denied",
+            description: "This account is not registered as staff.",
+            variant: "destructive",
+          });
+          await supabase.auth.signOut();
+          setLoading(false);
+          return;
+        }
+
+        toast({
+          title: "Login Successful",
+          description: "Welcome back!",
+        });
+        navigate("/staff/dashboard");
+      }
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -88,9 +142,10 @@ const StaffLogin = () => {
             {/* Login Button */}
             <Button
               type="submit"
-              className="w-full rounded-xl bg-gradient-card-lavender text-primary-foreground font-medium py-3 shadow-button transition-all duration-300 hover:shadow-hover active:scale-95 focus-visible:ring-2 focus-visible:ring-primary/30"
+              disabled={loading}
+              className="w-full rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3 shadow-button transition-all duration-300 hover:shadow-hover active:scale-95 focus-visible:ring-2 focus-visible:ring-primary/30"
             >
-              Login
+              {loading ? "Logging in..." : "Login"}
             </Button>
 
             {/* Links */}

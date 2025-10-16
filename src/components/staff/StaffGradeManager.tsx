@@ -32,10 +32,31 @@ const StaffGradeManager = () => {
   };
 
   const fetchStudents = async () => {
-    const { data } = await supabase
+    // Get staff profile to filter students by department/year
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: staffProfile } = await supabase
+      .from("staff_profiles")
+      .select("department, academic_year")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    // Fetch students filtered by staff's department and year
+    let query = supabase
       .from("student_profiles")
       .select("*")
       .order("full_name");
+
+    if (staffProfile?.department) {
+      query = query.eq("department", staffProfile.department);
+    }
+
+    if (staffProfile?.academic_year && staffProfile.academic_year !== "All Years") {
+      query = query.eq("academic_year", staffProfile.academic_year);
+    }
+
+    const { data } = await query;
 
     if (data) setStudents(data);
     setLoading(false);
