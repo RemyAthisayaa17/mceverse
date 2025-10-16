@@ -1,46 +1,52 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Search, User, CheckCircle, XCircle, Edit } from "lucide-react";
+import { ArrowLeft, Search, User } from "lucide-react";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-
-const students = [
-  {
-    id: 1,
-    name: "Alice Johnson",
-    rollNo: "CS001",
-    email: "alice@university.edu",
-    phone: "+1234567890",
-    subjects: ["Advanced Algorithms", "Database Systems"],
-    attendance: 85,
-    status: "active"
-  },
-  {
-    id: 2,
-    name: "Bob Smith", 
-    rollNo: "CS002",
-    email: "bob@university.edu",
-    phone: "+1234567891",
-    subjects: ["Advanced Algorithms", "Software Engineering"],
-    attendance: 92,
-    status: "active"
-  },
-  {
-    id: 3,
-    name: "Carol Davis",
-    rollNo: "CS003", 
-    email: "carol@university.edu",
-    phone: "+1234567892",
-    subjects: ["Database Systems", "Software Engineering"],
-    attendance: 78,
-    status: "active"
-  }
-];
+import StaffAttendanceManager from "@/components/staff/StaffAttendanceManager";
+import StaffGradeManager from "@/components/staff/StaffGradeManager";
 
 const StaffStudents = () => {
+  const [students, setStudents] = useState<any[]>([]);
+  const [filteredStudents, setFilteredStudents] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchStudents();
+  }, []);
+
+  useEffect(() => {
+    if (searchQuery) {
+      const filtered = students.filter(
+        (student) =>
+          student.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          student.register_number.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredStudents(filtered);
+    } else {
+      setFilteredStudents(students);
+    }
+  }, [searchQuery, students]);
+
+  const fetchStudents = async () => {
+    const { data, error } = await supabase
+      .from("student_profiles")
+      .select("*")
+      .order("full_name");
+
+    if (!error && data) {
+      setStudents(data);
+      setFilteredStudents(data);
+    }
+    setLoading(false);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-pastel">
       {/* Top Navigation */}
@@ -90,133 +96,66 @@ const StaffStudents = () => {
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
-                  placeholder="Search by name or roll number..."
+                  placeholder="Search by name or register number..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 rounded-xl border-border/30 focus:border-primary/50"
                 />
               </div>
             </div>
 
             {/* Students Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {students.map((student) => (
-                <Card key={student.id} className="rounded-2xl shadow-card border-border/20 hover:shadow-hover transition-all duration-300 bg-card">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-gradient-card-pink rounded-xl flex items-center justify-center">
-                          <User className="w-6 h-6 text-primary" />
-                        </div>
-                        <div>
-                          <CardTitle className="text-lg">{student.name}</CardTitle>
-                          <p className="text-sm text-muted-foreground">{student.rollNo}</p>
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredStudents.map((student) => (
+                  <Card key={student.id} className="rounded-2xl shadow-card border-border/20 hover:shadow-hover transition-all duration-300 bg-card">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 bg-gradient-card-pink rounded-xl flex items-center justify-center">
+                            <User className="w-6 h-6 text-white" />
+                          </div>
+                          <div>
+                            <CardTitle className="text-lg">{student.full_name}</CardTitle>
+                            <p className="text-sm text-muted-foreground">{student.register_number}</p>
+                          </div>
                         </div>
                       </div>
-                      <Badge variant="secondary" className="rounded-lg">
-                        {student.attendance}% attendance
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <p className="text-sm">
-                        <span className="text-muted-foreground">Email:</span> {student.email}
-                      </p>
-                      <p className="text-sm">
-                        <span className="text-muted-foreground">Phone:</span> {student.phone}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-2">Enrolled Subjects:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {student.subjects.map((subject, index) => (
-                          <Badge key={index} variant="outline" className="text-xs rounded-lg">
-                            {subject}
-                          </Badge>
-                        ))}
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <p className="text-sm">
+                          <span className="text-muted-foreground">Email:</span> {student.email}
+                        </p>
+                        <p className="text-sm">
+                          <span className="text-muted-foreground">Phone:</span> {student.phone_number || "N/A"}
+                        </p>
+                        <p className="text-sm">
+                          <span className="text-muted-foreground">Department:</span> {student.department}
+                        </p>
+                        <p className="text-sm">
+                          <span className="text-muted-foreground">Year:</span> {student.academic_year}
+                        </p>
                       </div>
-                    </div>
-                    <Button className="w-full rounded-xl bg-gradient-card-mint hover:bg-gradient-card-mint/80 text-foreground">
-                      View Profile
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </TabsContent>
 
           {/* Attendance Tab */}
           <TabsContent value="attendance" className="space-y-6">
-            <Card className="rounded-2xl shadow-card border-border/20 bg-card">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-primary" />
-                  Mark Attendance - Today
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {students.map((student) => (
-                  <div key={student.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-xl">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-card-lavender rounded-lg flex items-center justify-center">
-                        <User className="w-5 h-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{student.name}</p>
-                        <p className="text-sm text-muted-foreground">{student.rollNo}</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button size="sm" className="rounded-lg bg-primary hover:bg-primary/90">
-                        <CheckCircle className="w-4 h-4 mr-1" />
-                        Present
-                      </Button>
-                      <Button size="sm" variant="outline" className="rounded-lg border-destructive/20 hover:bg-destructive/10">
-                        <XCircle className="w-4 h-4 mr-1" />
-                        Absent
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+            <StaffAttendanceManager />
           </TabsContent>
 
           {/* Marks Tab */}
           <TabsContent value="marks" className="space-y-6">
-            <Card className="rounded-2xl shadow-card border-border/20 bg-card">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Edit className="w-5 h-5 text-primary" />
-                  Enter Marks
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {students.map((student) => (
-                  <div key={student.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-xl">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-card-pink rounded-lg flex items-center justify-center">
-                        <User className="w-5 h-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{student.name}</p>
-                        <p className="text-sm text-muted-foreground">{student.rollNo}</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2 items-center">
-                      <Input 
-                        placeholder="Enter marks"
-                        className="w-24 rounded-lg border-border/30"
-                        type="number"
-                        max="100"
-                      />
-                      <Button size="sm" className="rounded-lg bg-primary hover:bg-primary/90">
-                        Save
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+            <StaffGradeManager />
           </TabsContent>
         </Tabs>
       </main>

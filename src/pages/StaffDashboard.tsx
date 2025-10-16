@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -82,13 +83,17 @@ const StaffDashboard = () => {
               <p className="text-sm text-muted-foreground">Welcome back, Professor!</p>
             </div>
             <div className="flex items-center gap-4">
-              <Link
-                to="/"
-                className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors duration-300"
+              <Button
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  window.location.href = "/";
+                }}
+                variant="outline"
+                className="flex items-center gap-2 rounded-full border-border/50 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50"
               >
                 <LogOut className="w-4 h-4" />
                 <span className="text-sm">Logout</span>
-              </Link>
+              </Button>
             </div>
           </div>
         </div>

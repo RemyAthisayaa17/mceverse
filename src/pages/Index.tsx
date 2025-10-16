@@ -46,15 +46,6 @@ const Index = () => {
         </div>
       </main>
       
-      {/* Admin Login Link */}
-      <footer className="pb-8 flex justify-center">
-        <Link
-          to="/admin-login"
-          className="text-sm text-muted-foreground hover:text-primary transition-colors duration-300 px-4 py-2 rounded-lg hover:bg-card/50"
-        >
-          Admin Login
-        </Link>
-      </footer>
     </div>
   );
 };
