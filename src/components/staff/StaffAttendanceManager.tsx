@@ -60,6 +60,7 @@ const StaffAttendanceManager = () => {
   };
 
   const markAttendance = async (studentId: string, status: string) => {
+    // Validate inputs
     if (!selectedSubject) {
       toast({
         title: "Error",
@@ -69,64 +70,63 @@ const StaffAttendanceManager = () => {
       return;
     }
 
-    setSaving(true);
-
-    const today = new Date().toISOString().split("T")[0];
-
-    // Check if attendance already exists
-    const { data: existing } = await supabase
-      .from("attendance")
-      .select("*")
-      .eq("student_id", studentId)
-      .eq("subject_id", selectedSubject)
-      .eq("date", today)
-      .single();
-
-    if (existing) {
-      // Update existing
-      const { error } = await supabase
-        .from("attendance")
-        .update({ status })
-        .eq("id", existing.id);
-
-      if (error) {
-        toast({
-          title: "Error",
-          description: "Failed to update attendance",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Success",
-          description: "Attendance updated successfully",
-        });
-      }
-    } else {
-      // Create new
-      const { error } = await supabase
-        .from("attendance")
-        .insert({
-          student_id: studentId,
-          subject_id: selectedSubject,
-          date: today,
-          status,
-        });
-
-      if (error) {
-        toast({
-          title: "Error",
-          description: "Failed to mark attendance",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Success",
-          description: "Attendance marked successfully",
-        });
-      }
+    if (!studentId || !status) {
+      toast({
+        title: "Error",
+        description: "Invalid student or status",
+        variant: "destructive",
+      });
+      return;
     }
 
-    setSaving(false);
+    if (!["present", "absent", "late"].includes(status)) {
+      toast({
+        title: "Error",
+        description: "Invalid attendance status",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      const today = new Date().toISOString().split("T")[0];
+
+      // Use upsert to avoid duplicates (conflict on student_id + date + subject_id)
+      const { error } = await supabase
+        .from("attendance")
+        .upsert(
+          {
+            student_id: studentId,
+            subject_id: selectedSubject,
+            date: today,
+            status,
+          },
+          {
+            onConflict: "student_id,subject_id,date",
+          }
+        );
+
+      if (error) {
+        console.error("Attendance error:", error);
+        throw new Error(error.message || "Failed to mark attendance");
+      }
+
+      toast({
+        title: "Success",
+        description: `Attendance marked as ${status}`,
+      });
+    } catch (error: any) {
+      console.error("Failed to mark attendance:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to mark attendance",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) {
@@ -187,7 +187,7 @@ const StaffAttendanceManager = () => {
                   size="sm"
                   onClick={() => markAttendance(student.id, "present")}
                   disabled={saving || !selectedSubject}
-                  className="rounded-full bg-secondary hover:bg-secondary/90 text-secondary-foreground"
+                  className="rounded-full bg-secondary hover:bg-secondary/80 text-secondary-foreground font-medium disabled:opacity-50"
                 >
                   <CheckCircle className="w-4 h-4 mr-1" />
                   Present
@@ -197,7 +197,7 @@ const StaffAttendanceManager = () => {
                   onClick={() => markAttendance(student.id, "late")}
                   disabled={saving || !selectedSubject}
                   variant="outline"
-                  className="rounded-full border-accent/50 hover:bg-accent/10"
+                  className="rounded-full border-2 border-accent hover:bg-accent/20 font-medium disabled:opacity-50"
                 >
                   <Clock className="w-4 h-4 mr-1" />
                   Late
@@ -207,7 +207,7 @@ const StaffAttendanceManager = () => {
                   onClick={() => markAttendance(student.id, "absent")}
                   disabled={saving || !selectedSubject}
                   variant="outline"
-                  className="rounded-full border-destructive/50 hover:bg-destructive/10 text-destructive"
+                  className="rounded-full border-2 border-destructive hover:bg-destructive/20 text-destructive font-medium disabled:opacity-50"
                 >
                   <XCircle className="w-4 h-4 mr-1" />
                   Absent

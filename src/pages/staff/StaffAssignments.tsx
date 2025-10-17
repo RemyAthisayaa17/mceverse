@@ -74,6 +74,30 @@ const StaffAssignments = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate required fields
+    if (!formData.title || !formData.subject_id || !formData.department || !formData.academic_year) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate deadline is in the future if provided
+    if (formData.due_date) {
+      const dueDate = new Date(formData.due_date);
+      if (dueDate < new Date()) {
+        toast({
+          title: "Error",
+          description: "Due date must be in the future",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     setUploading(true);
 
     try {
@@ -89,14 +113,21 @@ const StaffAssignments = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Assignment insert error:", error);
+        throw new Error(error.message || "Failed to post assignment");
+      }
 
       // Create notifications for all students in the department and year
-      const { data: students } = await supabase
+      const { data: students, error: studentsError } = await supabase
         .from("student_profiles")
         .select("id")
         .eq("department", formData.department)
         .eq("academic_year", formData.academic_year);
+
+      if (studentsError) {
+        console.error("Failed to fetch students for notifications:", studentsError);
+      }
 
       if (students && students.length > 0) {
         const notifications = students.map((student) => ({
@@ -107,12 +138,18 @@ const StaffAssignments = () => {
           related_id: assignment.id,
         }));
 
-        await supabase.from("student_notifications").insert(notifications);
+        const { error: notifError } = await supabase
+          .from("student_notifications")
+          .insert(notifications);
+
+        if (notifError) {
+          console.error("Failed to create notifications:", notifError);
+        }
       }
 
       toast({
         title: "Success",
-        description: "Assignment posted successfully",
+        description: `Assignment posted successfully to ${students?.length || 0} students`,
       });
 
       setFormData({
@@ -128,9 +165,10 @@ const StaffAssignments = () => {
       setUploadOpen(false);
       fetchAssignments();
     } catch (error: any) {
+      console.error("Failed to post assignment:", error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to post assignment",
         variant: "destructive",
       });
     } finally {
@@ -179,7 +217,7 @@ const StaffAssignments = () => {
             </div>
             <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
               <DialogTrigger asChild>
-                <Button className="rounded-full bg-gradient-card-lavender border-0 hover:shadow-hover">
+                <Button className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md hover:shadow-hover">
                   <Plus className="w-4 h-4 mr-2" />
                   Post Assignment
                 </Button>
@@ -316,7 +354,7 @@ const StaffAssignments = () => {
                   <Button
                     type="submit"
                     disabled={uploading}
-                    className="w-full rounded-full bg-gradient-card-pink border-0 hover:shadow-hover"
+                    className="w-full rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md disabled:opacity-50"
                   >
                     {uploading ? (
                       <div className="flex items-center gap-2">

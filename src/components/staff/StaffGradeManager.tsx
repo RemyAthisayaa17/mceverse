@@ -67,17 +67,38 @@ const StaffGradeManager = () => {
   };
 
   const saveGrade = async (studentId: string) => {
-    if (!selectedSubject || !grades[studentId]) {
+    // Validate inputs
+    if (!selectedSubject) {
       toast({
         title: "Error",
-        description: "Please select a subject and enter a grade",
+        description: "Please select a subject first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!grades[studentId]) {
+      toast({
+        title: "Error",
+        description: "Please enter a grade",
         variant: "destructive",
       });
       return;
     }
 
     const gradeValue = parseFloat(grades[studentId]);
-    if (isNaN(gradeValue) || gradeValue < 0 || gradeValue > 100) {
+    
+    // Validate grade range
+    if (isNaN(gradeValue)) {
+      toast({
+        title: "Error",
+        description: "Grade must be a valid number",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (gradeValue < 0 || gradeValue > 100) {
       toast({
         title: "Error",
         description: "Grade must be between 0 and 100",
@@ -88,37 +109,49 @@ const StaffGradeManager = () => {
 
     setSaving(true);
 
-    const { data: { user } } = await supabase.auth.getUser();
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
 
-    const { error } = await supabase
-      .from("grades")
-      .insert({
-        student_id: studentId,
-        subject_id: selectedSubject,
-        grade: gradeValue,
-        assignment_name: assignmentName || "General Assessment",
-        graded_by: user?.id,
-      });
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
 
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to save grade",
-        variant: "destructive",
-      });
-    } else {
+      const { error } = await supabase
+        .from("grades")
+        .insert({
+          student_id: studentId,
+          subject_id: selectedSubject,
+          grade: gradeValue,
+          assignment_name: assignmentName || "General Assessment",
+          graded_by: user.id,
+        });
+
+      if (error) {
+        console.error("Grade save error:", error);
+        throw new Error(error.message || "Failed to save grade");
+      }
+
       toast({
         title: "Success",
-        description: "Grade saved successfully",
+        description: `Grade ${gradeValue} saved successfully`,
       });
+      
+      // Clear the saved grade from state
       setGrades((prev) => {
         const newGrades = { ...prev };
         delete newGrades[studentId];
         return newGrades;
       });
+    } catch (error: any) {
+      console.error("Failed to save grade:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save grade",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
     }
-
-    setSaving(false);
   };
 
   if (loading) {
@@ -200,7 +233,7 @@ const StaffGradeManager = () => {
                   size="sm"
                   onClick={() => saveGrade(student.id)}
                   disabled={saving || !selectedSubject || !grades[student.id]}
-                  className="rounded-full bg-primary hover:bg-primary/90"
+                  className="rounded-full bg-primary hover:bg-primary/80 font-medium disabled:opacity-50"
                 >
                   <Save className="w-4 h-4 mr-1" />
                   Save

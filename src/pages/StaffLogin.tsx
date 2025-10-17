@@ -143,7 +143,7 @@ const StaffLogin = () => {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3 shadow-button transition-all duration-300 hover:shadow-hover active:scale-95 focus-visible:ring-2 focus-visible:ring-primary/30"
+              className="w-full rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3 shadow-md transition-all duration-300 hover:shadow-hover active:scale-95 focus-visible:ring-2 focus-visible:ring-primary/30 disabled:opacity-50"
             >
               {loading ? "Logging in..." : "Login"}
             </Button>
