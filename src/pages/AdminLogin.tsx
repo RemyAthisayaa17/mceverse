@@ -30,7 +30,7 @@ const AdminLogin = () => {
                   id="username"
                   type="text"
                   placeholder="Enter admin username"
-                  className="pl-10 border-purple-200 focus:border-purple-400 focus:ring-purple-400/20 rounded-xl"
+                  className="pl-10 border-gray-400 bg-gray-100 text-gray-900 placeholder-gray-500 focus:border-purple-400 focus:ring-purple-400/20 rounded-xl"
                 />
               </div>
             </div>
@@ -45,7 +45,7 @@ const AdminLogin = () => {
                   id="password"
                   type="password"
                   placeholder="Enter admin password"
-                  className="pl-10 border-purple-200 focus:border-purple-400 focus:ring-purple-400/20 rounded-xl"
+                  className="pl-10 border-gray-400 bg-gray-100 text-gray-900 placeholder-gray-500 focus:border-purple-400 focus:ring-purple-400/20 rounded-xl"
                 />
               </div>
             </div>

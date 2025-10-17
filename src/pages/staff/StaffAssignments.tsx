@@ -216,12 +216,12 @@ const StaffAssignments = () => {
               <h1 className="text-2xl font-bold text-foreground">Assignments</h1>
             </div>
             <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
-              <DialogTrigger asChild>
-                <Button className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md hover:shadow-hover">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Post Assignment
-                </Button>
-              </DialogTrigger>
+            <DialogTrigger asChild>
+              <Button className="rounded-full bg-gray-900 hover:bg-gray-800 text-white font-semibold shadow-md">
+                <Plus className="w-4 h-4 mr-2" />
+                Post Assignment
+              </Button>
+            </DialogTrigger>
               <DialogContent className="max-w-2xl bg-card/95 backdrop-blur-sm border-border/50">
                 <DialogHeader>
                   <DialogTitle className="text-2xl text-foreground">Post New Assignment</DialogTitle>
@@ -354,7 +354,7 @@ const StaffAssignments = () => {
                   <Button
                     type="submit"
                     disabled={uploading}
-                    className="w-full rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md disabled:opacity-50"
+                    className="w-full rounded-full bg-gray-900 hover:bg-gray-800 text-white font-semibold shadow-md disabled:opacity-50"
                   >
                     {uploading ? (
                       <div className="flex items-center gap-2">

@@ -67,7 +67,6 @@ const StaffGradeManager = () => {
   };
 
   const saveGrade = async (studentId: string) => {
-    // Validate inputs
     if (!selectedSubject) {
       toast({
         title: "Error",
@@ -88,7 +87,6 @@ const StaffGradeManager = () => {
 
     const gradeValue = parseFloat(grades[studentId]);
     
-    // Validate grade range
     if (isNaN(gradeValue)) {
       toast({
         title: "Error",
@@ -108,6 +106,7 @@ const StaffGradeManager = () => {
     }
 
     setSaving(true);
+    console.log('[Grade] Saving:', { studentId, subjectId: selectedSubject, grade: gradeValue });
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -118,32 +117,37 @@ const StaffGradeManager = () => {
 
       const { error } = await supabase
         .from("grades")
-        .insert({
-          student_id: studentId,
-          subject_id: selectedSubject,
-          grade: gradeValue,
-          assignment_name: assignmentName || "General Assessment",
-          graded_by: user.id,
-        });
+        .upsert(
+          {
+            student_id: studentId,
+            subject_id: selectedSubject,
+            grade: gradeValue,
+            assignment_name: assignmentName || "General Assessment",
+            graded_by: user.id,
+          },
+          {
+            onConflict: "student_id,subject_id"
+          }
+        );
 
       if (error) {
-        console.error("Grade save error:", error);
+        console.error('[Grade] Error:', error);
         throw new Error(error.message || "Failed to save grade");
       }
 
+      console.log('[Grade] Success');
       toast({
         title: "Success",
         description: `Grade ${gradeValue} saved successfully`,
       });
       
-      // Clear the saved grade from state
       setGrades((prev) => {
         const newGrades = { ...prev };
         delete newGrades[studentId];
         return newGrades;
       });
     } catch (error: any) {
-      console.error("Failed to save grade:", error);
+      console.error('[Grade] Exception:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to save grade",

@@ -168,7 +168,7 @@ const StudentLogin = () => {
                 placeholder="Enter your email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg border-input bg-background/50 focus:border-secondary focus:ring-secondary/20"
+                className="w-full rounded-lg border-gray-400 bg-gray-100 text-gray-900 placeholder-gray-500 focus:border-secondary focus:ring-secondary/20"
                 required
               />
             </div>
@@ -185,7 +185,7 @@ const StudentLogin = () => {
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-lg border-input bg-background/50 focus:border-secondary focus:ring-secondary/20 pr-10"
+                  className="w-full rounded-lg border-gray-400 bg-gray-100 text-gray-900 placeholder-gray-500 focus:border-secondary focus:ring-secondary/20 pr-10"
                   required
                 />
                 <button

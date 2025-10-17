@@ -25,28 +25,51 @@ const StudentProfile = ({ profile, onUpdate }: StudentProfileProps) => {
   const { toast } = useToast();
 
   const handleSave = async () => {
-    if (!profile?.id) return;
-
-    const { data, error } = await supabase
-      .from("student_profiles")
-      .update(formData)
-      .eq("id", profile.id)
-      .select()
-      .single();
-
-    if (error) {
+    if (!profile?.id) {
       toast({
         title: "Error",
-        description: "Failed to update profile. Please try again.",
+        description: "Profile ID is missing",
         variant: "destructive",
       });
-    } else {
+      return;
+    }
+
+    console.log('[Profile] Updating:', { id: profile.id, data: formData });
+
+    try {
+      const { data, error } = await supabase
+        .from("student_profiles")
+        .update({
+          ...formData,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", profile.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('[Profile] Error:', error);
+        toast({
+          title: "Error",
+          description: `Failed to update: ${error.message}`,
+          variant: "destructive",
+        });
+      } else {
+        console.log('[Profile] Success:', data);
+        toast({
+          title: "Success",
+          description: "Profile updated successfully!",
+        });
+        onUpdate(data);
+        setIsEditing(false);
+      }
+    } catch (err: any) {
+      console.error('[Profile] Exception:', err);
       toast({
-        title: "Success",
-        description: "Profile updated successfully!",
+        title: "Error",
+        description: "Failed to update profile",
+        variant: "destructive",
       });
-      onUpdate(data);
-      setIsEditing(false);
     }
   };
 

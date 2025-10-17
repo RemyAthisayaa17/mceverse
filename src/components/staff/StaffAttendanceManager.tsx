@@ -60,7 +60,6 @@ const StaffAttendanceManager = () => {
   };
 
   const markAttendance = async (studentId: string, status: string) => {
-    // Validate inputs
     if (!selectedSubject) {
       toast({
         title: "Error",
@@ -89,11 +88,10 @@ const StaffAttendanceManager = () => {
     }
 
     setSaving(true);
+    const today = new Date().toISOString().split("T")[0];
+    console.log('[Attendance] Saving:', { studentId, subjectId: selectedSubject, date: today, status });
 
     try {
-      const today = new Date().toISOString().split("T")[0];
-
-      // Use upsert to avoid duplicates (conflict on student_id + date + subject_id)
       const { error } = await supabase
         .from("attendance")
         .upsert(
@@ -109,16 +107,17 @@ const StaffAttendanceManager = () => {
         );
 
       if (error) {
-        console.error("Attendance error:", error);
+        console.error('[Attendance] Error:', error);
         throw new Error(error.message || "Failed to mark attendance");
       }
 
+      console.log('[Attendance] Success');
       toast({
         title: "Success",
         description: `Attendance marked as ${status}`,
       });
     } catch (error: any) {
-      console.error("Failed to mark attendance:", error);
+      console.error('[Attendance] Exception:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to mark attendance",
