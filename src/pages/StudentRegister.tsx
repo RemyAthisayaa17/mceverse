@@ -96,17 +96,20 @@ const StudentRegister = () => {
       });
 
       if (authError) {
-        console.error('[signup] signupFailed:', authError);
+        const errorMessage = authError.message.includes('already registered')
+          ? 'This email is already registered'
+          : 'Registration failed. Please try again.';
+        
         toast({
           title: "Registration Failed",
-          description: authError.message,
+          description: errorMessage,
           variant: "destructive",
         });
         setLoading(false);
         return;
       }
 
-      console.log('[signup] signupSuccess, user:', authData.user?.id);
+      // User created successfully
 
       if (!authData.user) {
         toast({
@@ -122,8 +125,6 @@ const StudentRegister = () => {
       await new Promise(resolve => setTimeout(resolve, 500));
 
       // Attempt 1: Try to create both profiles tables
-      console.log('[signup] profileInsertStart');
-      
       let studentProfileError = null;
       let profilesError = null;
 
@@ -156,7 +157,6 @@ const StudentRegister = () => {
 
       // If both failed, retry once after 300ms
       if (studentProfileError || profilesError) {
-        console.log('[signup] profileInsertRetry after 300ms');
         await new Promise(resolve => setTimeout(resolve, 300));
 
         if (studentProfileError) {
@@ -189,7 +189,6 @@ const StudentRegister = () => {
 
       // If profiles still failed, fallback to edge function (service role)
       if (profilesError) {
-        console.log('[signup] profileInsertFailed, calling safe-signup edge function');
         const { error: edgeFnError } = await supabase.functions.invoke('safe-signup', {
           body: {
             userId: authData.user.id,
@@ -199,14 +198,9 @@ const StudentRegister = () => {
           }
         });
 
-        if (edgeFnError) {
-          console.error('[signup] safe-signup edge function error:', edgeFnError);
-        } else {
-          console.log('[signup] profileInsertSuccess via edge function');
+        if (!edgeFnError) {
           profilesError = null; // Mark as resolved
         }
-      } else {
-        console.log('[signup] profileInsertSuccess');
       }
 
       // Report status

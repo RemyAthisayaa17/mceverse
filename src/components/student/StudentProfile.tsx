@@ -34,8 +34,6 @@ const StudentProfile = ({ profile, onUpdate }: StudentProfileProps) => {
       return;
     }
 
-    console.log('[Profile] Updating:', { id: profile.id, data: formData });
-
     try {
       const { data, error } = await supabase
         .from("student_profiles")
@@ -48,14 +46,16 @@ const StudentProfile = ({ profile, onUpdate }: StudentProfileProps) => {
         .single();
 
       if (error) {
-        console.error('[Profile] Error:', error);
+        const errorMessage = error.message.includes('violates row-level security')
+          ? 'You do not have permission to update this profile'
+          : 'Failed to update profile. Please try again.';
+        
         toast({
           title: "Error",
-          description: `Failed to update: ${error.message}`,
+          description: errorMessage,
           variant: "destructive",
         });
       } else {
-        console.log('[Profile] Success:', data);
         toast({
           title: "Success",
           description: "Profile updated successfully!",
@@ -64,7 +64,6 @@ const StudentProfile = ({ profile, onUpdate }: StudentProfileProps) => {
         setIsEditing(false);
       }
     } catch (err: any) {
-      console.error('[Profile] Exception:', err);
       toast({
         title: "Error",
         description: "Failed to update profile",

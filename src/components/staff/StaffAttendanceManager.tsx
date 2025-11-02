@@ -107,20 +107,21 @@ const StaffAttendanceManager = () => {
         );
 
       if (error) {
-        console.error('[Attendance] Error:', error);
         throw new Error(error.message || "Failed to mark attendance");
       }
 
-      console.log('[Attendance] Success');
       toast({
         title: "Success",
         description: `Attendance marked as ${status}`,
       });
     } catch (error: any) {
-      console.error('[Attendance] Exception:', error);
+      const errorMessage = error.message?.includes('violates row-level security')
+        ? 'You do not have permission to mark attendance'
+        : 'Failed to mark attendance. Please try again.';
+      
       toast({
         title: "Error",
-        description: error.message || "Failed to mark attendance",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

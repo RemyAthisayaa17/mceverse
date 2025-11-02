@@ -106,7 +106,6 @@ const StaffGradeManager = () => {
     }
 
     setSaving(true);
-    console.log('[Grade] Saving:', { studentId, subjectId: selectedSubject, grade: gradeValue });
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -131,11 +130,9 @@ const StaffGradeManager = () => {
         );
 
       if (error) {
-        console.error('[Grade] Error:', error);
         throw new Error(error.message || "Failed to save grade");
       }
 
-      console.log('[Grade] Success');
       toast({
         title: "Success",
         description: `Grade ${gradeValue} saved successfully`,
@@ -147,10 +144,15 @@ const StaffGradeManager = () => {
         return newGrades;
       });
     } catch (error: any) {
-      console.error('[Grade] Exception:', error);
+      const errorMessage = error.message?.includes('violates row-level security')
+        ? 'You do not have permission to save grades'
+        : error.message?.includes('constraint')
+        ? 'Grade must be between 0 and 100'
+        : 'Failed to save grade. Please try again.';
+      
       toast({
         title: "Error",
-        description: error.message || "Failed to save grade",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

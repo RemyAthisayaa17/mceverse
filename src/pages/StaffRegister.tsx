@@ -107,7 +107,11 @@ const StaffRegister = () => {
         });
 
       if (profileError) {
-        console.error('Profile creation error:', profileError);
+        toast({
+          title: "Warning",
+          description: "Profile creation incomplete. Please contact support.",
+          variant: "destructive",
+        });
       }
 
       toast({
@@ -120,7 +124,6 @@ const StaffRegister = () => {
       }, 1500);
 
     } catch (err: any) {
-      console.error('Registration error:', err);
       toast({
         title: "Network Error",
         description: "Unable to complete registration. Please try again.",
