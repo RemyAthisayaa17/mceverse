@@ -26,11 +26,22 @@ const StaffLogin = () => {
       });
 
       if (error) {
-        toast({
-          title: "Login Failed",
-          description: error.message,
-          variant: "destructive",
-        });
+        if (error.message.includes("Invalid login credentials")) {
+          try {
+            await supabase.auth.resend({ type: 'signup', email: email.trim() });
+          } catch (_) {}
+          toast({
+            title: "Email Not Verified",
+            description: "We sent a new verification link to your email. Please verify, then log in.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Login Failed",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
         setLoading(false);
         return;
       }

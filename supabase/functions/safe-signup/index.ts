@@ -28,34 +28,7 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Validate email format
-    if (!EMAIL_REGEX.test(email)) {
-      console.error('[safe-signup] Invalid email format')
-      return new Response(
-        JSON.stringify({ error: 'Invalid email format' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    // Validate full name length
-    if (fullName && fullName.length > 200) {
-      console.error('[safe-signup] Full name too long')
-      return new Response(
-        JSON.stringify({ error: 'Full name exceeds maximum length' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    // Validate phone number format if provided
-    if (phoneNumber && !/^[\d\s\+\-\(\)]+$/.test(phoneNumber)) {
-      console.error('[safe-signup] Invalid phone number format')
-      return new Response(
-        JSON.stringify({ error: 'Invalid phone number format' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    // Validate userId format (basic UUID check)
+    // Validate formats
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
     if (!uuidRegex.test(userId)) {
       console.error('[safe-signup] Invalid userId format')
@@ -65,21 +38,78 @@ Deno.serve(async (req) => {
       )
     }
 
+    if (!EMAIL_REGEX.test(email)) {
+      console.error('[safe-signup] Invalid email format')
+      return new Response(
+        JSON.stringify({ error: 'Invalid email format' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (fullName && fullName.length > 200) {
+      console.error('[safe-signup] Full name too long')
+      return new Response(
+        JSON.stringify({ error: 'Full name exceeds maximum length' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (phoneNumber && !/^[\d\s\+\-\(\)]+$/.test(phoneNumber)) {
+      console.error('[safe-signup] Invalid phone number format')
+      return new Response(
+        JSON.stringify({ error: 'Invalid phone number format' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Get authenticated user from JWT to verify caller identity
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      console.error('[safe-signup] No authorization header')
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Create Supabase client to verify JWT
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+    
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    })
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      console.error('[safe-signup] Authentication failed:', authError?.message)
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Verify the userId matches the authenticated user
+    if (user.id !== userId) {
+      console.error('[safe-signup] User ID mismatch - potential impersonation attempt')
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     // Create Supabase admin client with service role key
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
       {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
+        auth: { autoRefreshToken: false, persistSession: false }
       }
     )
 
     console.log('[safe-signup] Attempting to insert profile for user:', userId)
 
-    // Insert profile using service role (bypasses RLS)
     const { data, error } = await supabaseAdmin
       .from('profiles')
       .insert({

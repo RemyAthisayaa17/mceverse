@@ -48,17 +48,24 @@ const StudentLogin = () => {
       });
 
       if (error) {
-        // Handle specific error cases
+        // Common case: email not confirmed yet shows as invalid credentials
         if (error.message.includes("Invalid login credentials")) {
+          // Try resending verification email silently
+          try {
+            await supabase.auth.resend({ type: 'signup', email: email.trim() });
+          } catch (_) {}
           toast({
-            title: "Login Failed",
-            description: "Invalid email or password. If you haven't registered yet, please sign up first.",
+            title: "Email Not Verified",
+            description: "We sent a new verification link to your email. Please verify, then log in.",
             variant: "destructive",
           });
         } else if (error.message.includes("Email not confirmed")) {
+          try {
+            await supabase.auth.resend({ type: 'signup', email: email.trim() });
+          } catch (_) {}
           toast({
             title: "Email Not Verified",
-            description: "Please check your email and verify your account before logging in.",
+            description: "We sent a new verification link to your email. Please verify, then log in.",
             variant: "destructive",
           });
         } else {
