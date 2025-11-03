@@ -37,21 +37,52 @@ const StaffLogin = () => {
 
       if (data.user) {
         // Check if staff profile exists
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from("staff_profiles")
           .select("*")
           .eq("user_id", data.user.id)
           .maybeSingle();
 
+        if (profileError) {
+          console.error('[StaffLogin] Profile check error:', profileError);
+        }
+
         if (!profile) {
-          toast({
-            title: "Access Denied",
-            description: "This account is not registered as staff.",
-            variant: "destructive",
-          });
-          await supabase.auth.signOut();
-          setLoading(false);
-          return;
+          // Try to auto-create profile from user metadata
+          const metadata = data.user.user_metadata;
+          if (metadata?.full_name && metadata?.department) {
+            const { error: createError } = await supabase
+              .from("staff_profiles")
+              .insert({
+                user_id: data.user.id,
+                email: data.user.email || email,
+                full_name: metadata.full_name,
+                department: metadata.department,
+                academic_year: metadata.academic_year || null,
+                phone_number: metadata.phone_number || null,
+              });
+
+            if (createError) {
+              console.error('[StaffLogin] Auto-create profile failed:', createError);
+              toast({
+                title: "Access Denied",
+                description: "Profile setup incomplete. Please contact support.",
+                variant: "destructive",
+              });
+              await supabase.auth.signOut();
+              setLoading(false);
+              return;
+            }
+          } else {
+            toast({
+              title: "Access Denied",
+              description: "This account is not registered as staff.",
+              variant: "destructive",
+            });
+            await supabase.auth.signOut();
+            setLoading(false);
+            return;
+          }
         }
 
         toast({

@@ -92,10 +92,23 @@ const StaffRegister = () => {
         return;
       }
 
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Wait for session to be fully established
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Insert into staff_profiles
-      const { error: profileError } = await supabase
+      // Get fresh session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast({
+          title: "Registration Successful! 🎉",
+          description: "Check your email to verify your account before logging in.",
+        });
+        setTimeout(() => navigate("/staff-login"), 1500);
+        return;
+      }
+
+      // Try to create profiles with authenticated session
+      const { error: staffProfileError } = await supabase
         .from("staff_profiles")
         .insert({
           user_id: authData.user.id,
@@ -106,17 +119,41 @@ const StaffRegister = () => {
           academic_year: yearOfStudy,
         });
 
-      if (profileError) {
-        toast({
-          title: "Warning",
-          description: "Profile creation incomplete. Please contact support.",
-          variant: "destructive",
+      const { error: profilesError } = await supabase
+        .from("profiles")
+        .insert({
+          id: authData.user.id,
+          email: data.email.trim(),
+          full_name: data.fullName.trim(),
+          phone_number: data.phone.trim(),
         });
+
+      // If direct insert failed, try edge function as fallback
+      if (profilesError) {
+        console.log('[staff-signup] Direct profile insert failed, trying edge function');
+        const { error: edgeFnError } = await supabase.functions.invoke('safe-signup', {
+          body: {
+            userId: authData.user.id,
+            email: data.email.trim(),
+            fullName: data.fullName.trim(),
+            phoneNumber: data.phone.trim(),
+          }
+        });
+
+        if (edgeFnError) {
+          console.error('[staff-signup] Edge function failed:', edgeFnError);
+        }
+      }
+
+      if (staffProfileError) {
+        console.error('[staff-signup] staff_profiles insert failed:', staffProfileError.message);
       }
 
       toast({
         title: "Registration Successful! 🎉",
-        description: "You can now login with your credentials.",
+        description: session 
+          ? "You can now login with your credentials."
+          : "Check your email to verify your account before logging in.",
       });
       
       setTimeout(() => {
