@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { GraduationCap, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import studentLoginImage from "@/assets/student-login.jpg";
 
 const StudentLogin = () => {
   const navigate = useNavigate();
@@ -68,6 +69,8 @@ const StudentLogin = () => {
     <div className="min-h-screen bg-gradient-pastel flex items-center justify-center px-6 py-12">
       <div className="w-full max-w-md">
         <div className="bg-card rounded-2xl shadow-card p-8 hover:shadow-hover transition-all duration-300">
+          {/* Image */}
+          <img src={studentLoginImage} alt="Welcoming students illustration" loading="lazy" className="w-full h-40 object-cover rounded-xl mb-6" />
           {/* Icon */}
           <div className="flex justify-center mb-6">
             <div className="w-16 h-16 rounded-full bg-secondary/10 flex items-center justify-center">
@@ -136,7 +139,6 @@ const StudentLogin = () => {
             <Button
               type="submit"
               disabled={loading}
-              variant="secondary"
               className="w-full font-semibold py-6 text-base"
             >
               {loading ? "Logging in..." : "Login"}

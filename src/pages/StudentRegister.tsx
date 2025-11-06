@@ -62,131 +62,54 @@ const StudentRegister = () => {
     console.log('[signup] signupStart');
 
     try {
-      // Check if user already exists in student_profiles
-      const { data: existingStudent } = await supabase
-        .from("student_profiles")
-        .select("email")
-        .eq("email", data.email.trim())
-        .maybeSingle();
-
-      if (existingStudent) {
-        toast({
-          title: "Registration Failed",
-          description: "An account with this email already exists. Please login instead.",
-          variant: "destructive",
-        });
-        setLoading(false);
-        return;
-      }
-
-      // Sign up the user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: data.email.trim(),
-        password: data.password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/student/dashboard`,
-          data: {
-            full_name: data.fullName,
-            register_number: data.studentId,
-            academic_year: yearOfStudy,
-            department: department,
-            phone_number: data.phone,
-          }
-        },
+      // Use admin-signup edge function to bypass email verification and create profiles
+      const { data: fnData, error: fnError } = await supabase.functions.invoke('admin-signup', {
+        body: {
+          role: 'student',
+          email: data.email.trim(),
+          password: data.password,
+          fullName: data.fullName.trim(),
+          phone: data.phone.trim(),
+          department,
+          yearOfStudy,
+          studentId: data.studentId.trim(),
+        }
       });
 
-      if (authError) {
-        const errorMessage = authError.message.includes('already registered')
-          ? 'This email is already registered'
-          : 'Registration failed. Please try again.';
-        
+      if (fnError) {
+        console.error('[student-signup] admin-signup failed:', fnError);
         toast({
-          title: "Registration Failed",
-          description: errorMessage,
-          variant: "destructive",
+          title: 'Registration Failed',
+          description: 'Could not create your account. Please try again.',
+          variant: 'destructive',
         });
         setLoading(false);
         return;
       }
 
-      if (!authData.user) {
+      // Immediately sign in the newly created user
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: data.email.trim(),
+        password: data.password,
+      });
+
+      if (signInError) {
+        console.error('[student-signup] signIn failed:', signInError.message);
         toast({
-          title: "Registration Failed",
-          description: "Unable to create account. Please try again.",
-          variant: "destructive",
+          title: 'Login Failed',
+          description: 'Please try logging in again.',
+          variant: 'destructive',
         });
         setLoading(false);
         return;
-      }
-
-      // Wait for session to be fully established
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Get fresh session
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        toast({
-          title: "Registration Successful! 🎉",
-          description: "Check your email to verify your account before logging in.",
-        });
-        setTimeout(() => navigate("/student-login"), 1500);
-        return;
-      }
-
-      // Try to create profiles with authenticated session
-      const { error: studentProfileError } = await supabase
-        .from("student_profiles")
-        .insert({
-          user_id: authData.user.id,
-          full_name: data.fullName.trim(),
-          register_number: data.studentId.trim(),
-          academic_year: yearOfStudy,
-          department: department,
-          phone_number: data.phone.trim(),
-          email: data.email.trim(),
-        });
-
-      const { error: profilesError } = await supabase
-        .from("profiles")
-        .insert({
-          id: authData.user.id,
-          email: data.email.trim(),
-          full_name: data.fullName.trim(),
-          phone_number: data.phone.trim(),
-        });
-
-      // If direct insert failed, try edge function as fallback
-      if (profilesError) {
-        console.log('[signup] Direct profile insert failed, trying edge function');
-        const { error: edgeFnError } = await supabase.functions.invoke('safe-signup', {
-          body: {
-            userId: authData.user.id,
-            email: data.email.trim(),
-            fullName: data.fullName.trim(),
-            phoneNumber: data.phone.trim(),
-          }
-        });
-
-        if (edgeFnError) {
-          console.error('[signup] Edge function failed:', edgeFnError);
-        }
-      }
-
-      if (studentProfileError) {
-        console.error('[signup] student_profiles insert failed:', studentProfileError.message);
       }
 
       toast({
-        title: "Registration Successful! 🎉",
-        description: session 
-          ? "You can now login with your credentials."
-          : "Check your email to verify your account before logging in.",
+        title: 'Registration Successful',
+        description: 'Welcome! Your account is ready.',
       });
-      
-      setTimeout(() => {
-        navigate("/student-login");
-      }, 1500);
+
+      navigate('/student/dashboard');
 
     } catch (err: any) {
       console.error('[signup] networkError:', err);

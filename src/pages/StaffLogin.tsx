@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Users, Eye, EyeOff } from "lucide-react";
+import staffLoginImage from "@/assets/staff-login.jpg";
 
 const StaffLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -57,6 +58,8 @@ const StaffLogin = () => {
     <div className="min-h-screen bg-gradient-pastel flex items-center justify-center px-6 py-12">
       <div className="w-full max-w-md">
         <div className="bg-card rounded-2xl shadow-card p-8 hover:shadow-hover transition-all duration-300">
+          {/* Image */}
+          <img src={staffLoginImage} alt="Friendly staff illustration" loading="lazy" className="w-full h-40 object-cover rounded-xl mb-6" />
           {/* Icon */}
           <div className="flex justify-center mb-6">
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">

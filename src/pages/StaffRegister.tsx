@@ -57,108 +57,53 @@ const StaffRegister = () => {
     setLoading(true);
 
     try {
-      // Sign up the user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: data.email.trim(),
-        password: data.password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/staff/dashboard`,
-          data: {
-            full_name: data.fullName,
-            department: department,
-            academic_year: yearOfStudy,
-            phone_number: data.phone,
-          }
-        },
+      // Use admin-signup edge function to bypass email verification and create profiles
+      const { data: fnData, error: fnError } = await supabase.functions.invoke('admin-signup', {
+        body: {
+          role: 'staff',
+          email: data.email.trim(),
+          password: data.password,
+          fullName: data.fullName.trim(),
+          phone: data.phone.trim(),
+          department,
+          yearOfStudy,
+        }
       });
 
-      if (authError) {
+      if (fnError) {
+        console.error('[staff-signup] admin-signup failed:', fnError);
         toast({
-          title: "Registration Failed",
-          description: authError.message,
-          variant: "destructive",
+          title: 'Registration Failed',
+          description: 'Could not create your account. Please try again.',
+          variant: 'destructive',
         });
         setLoading(false);
         return;
       }
 
-      if (!authData.user) {
+      // Immediately sign in the newly created user
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: data.email.trim(),
+        password: data.password,
+      });
+
+      if (signInError) {
+        console.error('[staff-signup] signIn failed:', signInError.message);
         toast({
-          title: "Registration Failed",
-          description: "Unable to create account. Please try again.",
-          variant: "destructive",
+          title: 'Login Failed',
+          description: 'Please try logging in again.',
+          variant: 'destructive',
         });
         setLoading(false);
         return;
-      }
-
-      // Wait for session to be fully established
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Get fresh session
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        toast({
-          title: "Registration Successful! 🎉",
-          description: "Check your email to verify your account before logging in.",
-        });
-        setTimeout(() => navigate("/staff-login"), 1500);
-        return;
-      }
-
-      // Try to create profiles with authenticated session
-      const { error: staffProfileError } = await supabase
-        .from("staff_profiles")
-        .insert({
-          user_id: authData.user.id,
-          full_name: data.fullName.trim(),
-          email: data.email.trim(),
-          phone_number: data.phone.trim(),
-          department: department,
-          academic_year: yearOfStudy,
-        });
-
-      const { error: profilesError } = await supabase
-        .from("profiles")
-        .insert({
-          id: authData.user.id,
-          email: data.email.trim(),
-          full_name: data.fullName.trim(),
-          phone_number: data.phone.trim(),
-        });
-
-      // If direct insert failed, try edge function as fallback
-      if (profilesError) {
-        console.log('[staff-signup] Direct profile insert failed, trying edge function');
-        const { error: edgeFnError } = await supabase.functions.invoke('safe-signup', {
-          body: {
-            userId: authData.user.id,
-            email: data.email.trim(),
-            fullName: data.fullName.trim(),
-            phoneNumber: data.phone.trim(),
-          }
-        });
-
-        if (edgeFnError) {
-          console.error('[staff-signup] Edge function failed:', edgeFnError);
-        }
-      }
-
-      if (staffProfileError) {
-        console.error('[staff-signup] staff_profiles insert failed:', staffProfileError.message);
       }
 
       toast({
-        title: "Registration Successful! 🎉",
-        description: session 
-          ? "You can now login with your credentials."
-          : "Check your email to verify your account before logging in.",
+        title: 'Registration Successful',
+        description: 'Welcome! Your account is ready.',
       });
-      
-      setTimeout(() => {
-        navigate("/staff-login");
-      }, 1500);
+
+      navigate('/staff/dashboard');
 
     } catch (err: any) {
       toast({
