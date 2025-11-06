@@ -26,76 +26,16 @@ const StaffLogin = () => {
       });
 
       if (error) {
-        if (error.message.includes("Invalid login credentials")) {
-          try {
-            await supabase.auth.resend({ type: 'signup', email: email.trim() });
-          } catch (_) {}
-          toast({
-            title: "Email Not Verified",
-            description: "We sent a new verification link to your email. Please verify, then log in.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Login Failed",
-            description: error.message,
-            variant: "destructive",
-          });
-        }
+        toast({
+          title: "Login Failed",
+          description: "Invalid email or password. Please try again.",
+          variant: "destructive",
+        });
         setLoading(false);
         return;
       }
 
-      if (data.user) {
-        // Check if staff profile exists
-        const { data: profile, error: profileError } = await supabase
-          .from("staff_profiles")
-          .select("*")
-          .eq("user_id", data.user.id)
-          .maybeSingle();
-
-        if (profileError) {
-          console.error('[StaffLogin] Profile check error:', profileError);
-        }
-
-        if (!profile) {
-          // Try to auto-create profile from user metadata
-          const metadata = data.user.user_metadata;
-          if (metadata?.full_name && metadata?.department) {
-            const { error: createError } = await supabase
-              .from("staff_profiles")
-              .insert({
-                user_id: data.user.id,
-                email: data.user.email || email,
-                full_name: metadata.full_name,
-                department: metadata.department,
-                academic_year: metadata.academic_year || null,
-                phone_number: metadata.phone_number || null,
-              });
-
-            if (createError) {
-              console.error('[StaffLogin] Auto-create profile failed:', createError);
-              toast({
-                title: "Access Denied",
-                description: "Profile setup incomplete. Please contact support.",
-                variant: "destructive",
-              });
-              await supabase.auth.signOut();
-              setLoading(false);
-              return;
-            }
-          } else {
-            toast({
-              title: "Access Denied",
-              description: "This account is not registered as staff.",
-              variant: "destructive",
-            });
-            await supabase.auth.signOut();
-            setLoading(false);
-            return;
-          }
-        }
-
+      if (data?.user) {
         toast({
           title: "Login Successful",
           description: "Welcome back!",
@@ -105,7 +45,7 @@ const StaffLogin = () => {
     } catch (err: any) {
       toast({
         title: "Error",
-        description: "An unexpected error occurred",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -147,7 +87,7 @@ const StaffLogin = () => {
                 placeholder="Enter your email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-xl border-gray-400 bg-gray-100 text-gray-900 placeholder-gray-500 focus-visible:ring-2 focus-visible:ring-primary/30"
+                className="w-full"
                 required
               />
             </div>
@@ -164,7 +104,7 @@ const StaffLogin = () => {
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-xl border-gray-400 bg-gray-100 text-gray-900 placeholder-gray-500 focus-visible:ring-2 focus-visible:ring-primary/30 pr-10"
+                  className="w-full pr-10"
                   required
                 />
                 <button
@@ -185,7 +125,7 @@ const StaffLogin = () => {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3 shadow-md transition-all duration-300 hover:shadow-hover active:scale-95 focus-visible:ring-2 focus-visible:ring-primary/30 disabled:opacity-50"
+              className="w-full font-semibold py-6 text-base"
             >
               {loading ? "Logging in..." : "Login"}
             </Button>

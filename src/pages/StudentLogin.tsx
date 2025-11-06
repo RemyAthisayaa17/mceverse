@@ -28,17 +28,6 @@ const StudentLogin = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validate fields
-    if (!email || !password) {
-      toast({
-        title: "Validation Error",
-        description: "Please enter both email and password",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setLoading(true);
 
     try {
@@ -48,92 +37,26 @@ const StudentLogin = () => {
       });
 
       if (error) {
-        // Common case: email not confirmed yet shows as invalid credentials
-        if (error.message.includes("Invalid login credentials")) {
-          // Try resending verification email silently
-          try {
-            await supabase.auth.resend({ type: 'signup', email: email.trim() });
-          } catch (_) {}
-          toast({
-            title: "Email Not Verified",
-            description: "We sent a new verification link to your email. Please verify, then log in.",
-            variant: "destructive",
-          });
-        } else if (error.message.includes("Email not confirmed")) {
-          try {
-            await supabase.auth.resend({ type: 'signup', email: email.trim() });
-          } catch (_) {}
-          toast({
-            title: "Email Not Verified",
-            description: "We sent a new verification link to your email. Please verify, then log in.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Login Failed",
-            description: error.message,
-            variant: "destructive",
-          });
-        }
-      } else if (data?.user) {
-        // Check if student profile exists
-        const { data: profile, error: profileError } = await supabase
-          .from("student_profiles")
-          .select("*")
-          .eq("user_id", data.user.id)
-          .maybeSingle();
+        toast({
+          title: "Login Failed",
+          description: "Invalid email or password. Please try again.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
 
-        if (profileError) {
-          console.error("Profile check error:", profileError);
-        }
-
-      if (!profile) {
-        // Auto-create student profile if missing
-        console.log('[StudentLogin] Profile not found, attempting auto-creation for user:', data.user.id);
-        
-        const { data: newProfile, error: createError } = await supabase
-          .from("student_profiles")
-          .insert({
-            user_id: data.user.id,
-            email: data.user.email || email,
-            full_name: data.user.user_metadata?.full_name || "Student",
-            register_number: data.user.user_metadata?.register_number || "PENDING",
-            academic_year: data.user.user_metadata?.academic_year || "Not Set",
-            department: data.user.user_metadata?.department || "Not Set",
-            phone_number: data.user.user_metadata?.phone_number || null,
-          })
-          .select()
-          .single();
-
-        if (createError) {
-          console.error('[StudentLogin] Auto-create profile failed:', createError);
-          toast({
-            title: "Profile Setup Required",
-            description: "Please complete your registration or contact support.",
-            variant: "destructive",
-          });
-          await supabase.auth.signOut();
-        } else {
-          console.log('[StudentLogin] Profile auto-created successfully:', newProfile);
-          toast({
-            title: "Welcome!",
-            description: "Please complete your profile information in the dashboard.",
-          });
-          navigate("/student/dashboard");
-        }
-      } else {
-        console.log('[StudentLogin] Profile found, login successful:', profile);
+      if (data?.user) {
         toast({
           title: "Login Successful",
-          description: `Welcome back, ${profile.full_name}!`,
+          description: "Welcome back!",
         });
         navigate("/student/dashboard");
       }
-      }
     } catch (err: any) {
       toast({
-        title: "Network Error",
-        description: "Unable to connect to the server. Please check your internet connection.",
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -175,7 +98,7 @@ const StudentLogin = () => {
                 placeholder="Enter your email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg border-gray-400 bg-gray-100 text-gray-900 placeholder-gray-500 focus:border-secondary focus:ring-secondary/20"
+                className="w-full"
                 required
               />
             </div>
@@ -192,7 +115,7 @@ const StudentLogin = () => {
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-lg border-gray-400 bg-gray-100 text-gray-900 placeholder-gray-500 focus:border-secondary focus:ring-secondary/20 pr-10"
+                  className="w-full pr-10"
                   required
                 />
                 <button
@@ -213,7 +136,8 @@ const StudentLogin = () => {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-secondary hover:opacity-90 text-secondary-foreground font-medium py-3 rounded-lg transition-all duration-300 hover:scale-[1.02] shadow-button disabled:opacity-50"
+              variant="secondary"
+              className="w-full font-semibold py-6 text-base"
             >
               {loading ? "Logging in..." : "Login"}
             </Button>
