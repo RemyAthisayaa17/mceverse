@@ -38,10 +38,10 @@ const StudentLogin = () => {
       });
 
       if (error) {
+        // Soft, neutral feedback (no "failed" wording)
         toast({
-          title: "Login Failed",
-          description: "Invalid email or password. Please try again.",
-          variant: "destructive",
+          title: "Please try again",
+          description: "Check your email and password.",
         });
         setLoading(false);
         return;
@@ -49,16 +49,15 @@ const StudentLogin = () => {
 
       if (data?.user) {
         toast({
-          title: "Login Successful",
-          description: "Welcome back!",
+          title: "Welcome back",
+          description: "You are now signed in.",
         });
         navigate("/student/dashboard");
       }
     } catch (err: any) {
       toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
+        title: "Please try again",
+        description: "An unexpected issue occurred.",
       });
     } finally {
       setLoading(false);

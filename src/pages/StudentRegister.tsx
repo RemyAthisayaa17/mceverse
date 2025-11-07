@@ -109,12 +109,13 @@ const StudentRegister = () => {
       });
 
       if (signInError) {
-        console.error('[student-signup] signIn failed:', signInError.message);
+        console.warn('[student-signup] signIn retry path:', signInError.message);
+        // Neutral path: guide user to login without negative wording
         toast({
-          title: 'Login Failed',
-          description: 'Please try logging in again.',
-          variant: 'destructive',
+          title: 'Account created',
+          description: 'Please login to continue.',
         });
+        navigate('/student-login');
         setLoading(false);
         return;
       }
@@ -146,8 +147,8 @@ const StudentRegister = () => {
           Student Registration
         </h1>
         
-        {/* Registration Card */}
-        <div className="bg-card rounded-2xl shadow-card p-8 border border-border/20">
+          {/* Registration Card */}
+          <div className="bg-card rounded-2xl shadow-card p-8 border border-border">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Full Name */}
             <div className="space-y-2">
