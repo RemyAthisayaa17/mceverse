@@ -136,7 +136,7 @@ const StaffRegister = () => {
                 id="fullName"
                 type="text"
                 placeholder="Enter your full name"
-                className="rounded-xl border-gray-400 bg-gray-100 text-gray-900 placeholder-gray-500 focus:border-primary/50 focus:ring-primary/30"
+                className=""
                 {...register("fullName", { required: "Full name is required" })}
               />
               {errors.fullName && (
@@ -153,7 +153,7 @@ const StaffRegister = () => {
                 id="email"
                 type="email"
                 placeholder="Enter your email address"
-                className="rounded-xl border-gray-400 bg-gray-100 text-gray-900 placeholder-gray-500 focus:border-primary/50 focus:ring-primary/30"
+                className=""
                 {...register("email", { 
                   required: "Email is required",
                   pattern: {
@@ -176,7 +176,7 @@ const StaffRegister = () => {
                 id="phone"
                 type="tel"
                 placeholder="Enter your phone number"
-                className="rounded-xl border-gray-400 bg-gray-100 text-gray-900 placeholder-gray-500 focus:border-primary/50 focus:ring-primary/30"
+                className=""
                 {...register("phone", { required: "Phone number is required" })}
               />
               {errors.phone && (
@@ -232,7 +232,7 @@ const StaffRegister = () => {
                 id="password"
                 type="password"
                 placeholder="Create a password"
-                className="rounded-xl border-gray-400 bg-gray-100 text-gray-900 placeholder-gray-500 focus:border-primary/50 focus:ring-primary/30"
+                className=""
                 {...register("password", { 
                   required: "Password is required",
                   minLength: {
@@ -255,7 +255,7 @@ const StaffRegister = () => {
                 id="confirmPassword"
                 type="password"
                 placeholder="Confirm your password"
-                className="rounded-xl border-gray-400 bg-gray-100 text-gray-900 placeholder-gray-500 focus:border-primary/50 focus:ring-primary/30"
+                className=""
                 {...register("confirmPassword", { required: "Please confirm your password" })}
               />
               {errors.confirmPassword && (
