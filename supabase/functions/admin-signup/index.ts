@@ -46,8 +46,17 @@ serve(async (req) => {
 
     if (createErr || !createRes?.user) {
       console.error("admin-signup:createUser", createErr);
+      
+      // Check if it's a duplicate email error
+      const isDuplicateEmail = createErr?.message?.includes('already been registered') || 
+                               (createErr as any)?.code === 'email_exists';
+      
       return new Response(
-        JSON.stringify({ ok: false, error: createErr?.message || "Failed to create user" }),
+        JSON.stringify({ 
+          ok: false, 
+          error: createErr?.message || "Failed to create user",
+          code: isDuplicateEmail ? 'EMAIL_EXISTS' : 'UNKNOWN_ERROR'
+        }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }

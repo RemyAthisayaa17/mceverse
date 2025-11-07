@@ -72,6 +72,21 @@ const StaffRegister = () => {
 
       if (fnError) {
         console.error('[staff-signup] admin-signup failed:', fnError);
+        
+        // Check if it's a duplicate email error
+        const errorData = fnData as any;
+        if (errorData?.code === 'EMAIL_EXISTS') {
+          toast({
+            title: 'Email Already Registered',
+            description: 'This email is already registered. Please login instead.',
+            variant: 'destructive',
+          });
+          setLoading(false);
+          // Redirect to login after 2 seconds
+          setTimeout(() => navigate('/staff-login'), 2000);
+          return;
+        }
+        
         toast({
           title: 'Registration Failed',
           description: 'Could not create your account. Please try again.',
