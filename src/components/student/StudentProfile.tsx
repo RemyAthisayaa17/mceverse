@@ -93,7 +93,8 @@ const StudentProfile = ({ profile, onUpdate }: StudentProfileProps) => {
             <Button
               onClick={() => setIsEditing(true)}
               size="sm"
-              className="bg-white/20 hover:bg-white/30 text-white rounded-full"
+              variant="secondary"
+              className="rounded-full shadow-sm"
             >
               <Edit2 className="w-4 h-4 mr-2" />
               Edit
@@ -103,7 +104,8 @@ const StudentProfile = ({ profile, onUpdate }: StudentProfileProps) => {
               <Button
                 onClick={handleSave}
                 size="sm"
-                className="bg-white/20 hover:bg-white/30 text-white rounded-full"
+                variant="default"
+                className="rounded-full shadow-sm"
               >
                 <Save className="w-4 h-4 mr-2" />
                 Save
@@ -111,8 +113,8 @@ const StudentProfile = ({ profile, onUpdate }: StudentProfileProps) => {
               <Button
                 onClick={handleCancel}
                 size="sm"
-                variant="ghost"
-                className="text-white hover:bg-white/10 rounded-full"
+                variant="outline"
+                className="rounded-full"
               >
                 <X className="w-4 h-4 mr-2" />
                 Cancel

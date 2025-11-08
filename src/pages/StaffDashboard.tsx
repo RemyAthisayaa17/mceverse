@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -66,12 +66,61 @@ const dashboardCards = [
 
 const StaffDashboard = () => {
   const [profile, setProfile] = useState({
-    name: "Dr. Rachel Martinez",
-    email: "rachel.martinez@school.edu",
-    role: "Associate Professor",
+    name: "",
+    email: "",
+    role: "",
     phone: "",
   });
   const [editOpen, setEditOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchStaffProfile();
+  }, []);
+
+  const fetchStaffProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        const { data: staffProfile, error } = await supabase
+          .from('staff_profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching staff profile:', error);
+          return;
+        }
+
+        if (staffProfile) {
+          setProfile({
+            name: staffProfile.full_name || "",
+            email: staffProfile.email || "",
+            role: staffProfile.department || "",
+            phone: staffProfile.phone_number || "",
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-pastel flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-pastel">
       {/* Top Navigation */}
@@ -122,7 +171,7 @@ const StaffDashboard = () => {
                     <Button
                       variant="secondary"
                       onClick={() => setEditOpen(true)}
-                      className="rounded-xl bg-white/60 hover:bg-white/80 active:scale-95 focus-visible:ring-2 focus-visible:ring-primary/30 text-foreground border-0"
+                      className="rounded-xl shadow-sm"
                       aria-label="Edit profile"
                     >
                       Edit
@@ -178,7 +227,7 @@ const StaffDashboard = () => {
                     <Button 
                       size="sm" 
                       variant="secondary"
-                      className="w-full bg-white/50 hover:bg-white/70 text-foreground border-0 shadow-sm"
+                      className="w-full shadow-sm"
                     >
                       {card.action}
                     </Button>

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +25,10 @@ export const EditProfileModal = ({ open, onOpenChange, currentProfile, onProfile
   const [profile, setProfile] = useState<StaffProfile>(currentProfile);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    setProfile(currentProfile);
+  }, [currentProfile]);
 
   const handleInputChange = (field: keyof StaffProfile, value: string) => {
     setProfile(prev => ({ ...prev, [field]: value }));
@@ -71,8 +76,37 @@ export const EditProfileModal = ({ open, onOpenChange, currentProfile, onProfile
 
     setLoading(true);
     try {
-      // Simulate API call - in real app this would call Supabase
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "User not authenticated",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Update staff profile in database
+      const { error } = await supabase
+        .from('staff_profiles')
+        .update({
+          full_name: profile.name,
+          email: profile.email,
+          department: profile.role,
+          phone_number: profile.phone,
+        })
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error updating profile:', error);
+        toast({
+          title: "Error",
+          description: "Failed to update profile",
+          variant: "destructive",
+        });
+        return;
+      }
       
       onProfileUpdated(profile);
       
@@ -84,6 +118,7 @@ export const EditProfileModal = ({ open, onOpenChange, currentProfile, onProfile
       
       onOpenChange(false);
     } catch (error) {
+      console.error('Update error:', error);
       toast({
         title: "Error",
         description: "Failed to update profile",
